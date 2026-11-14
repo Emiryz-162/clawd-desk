@@ -97,11 +97,13 @@ const PAGE = `<!doctype html><meta charset="utf-8"><title>Clawd Desk</title>
 <style>body{font:14px system-ui;background:#141413;color:#FAF9F5;margin:24px}
 pre{background:#1F1E1C;padding:16px;border-radius:8px;overflow:auto}h1{font-size:20px}
 .m{color:#A8A49C}</style><h1>Clawd Desk</h1>
+<p class="m">Bağlantı kontrolü (hook'lar ve status line):</p><pre id="d">...</pre>
 <p class="m">Ekrana giden veri, her 2 saniyede yenilenir.</p><pre id="o">...</pre>
-<script>async function t(){try{const r=await fetch('/state');document.getElementById('o').textContent=JSON.stringify(await r.json(),null,2)}catch(e){}}
+<script>async function t(){try{const r=await fetch('/state');document.getElementById('o').textContent=JSON.stringify(await r.json(),null,2);
+const d=await fetch('/debug');document.getElementById('d').textContent=JSON.stringify(await d.json(),null,2)}catch(e){}}
 t();setInterval(t,2000)</script>`;
 
-function startServer(port, { onHook, getState }) {
+function startServer(port, { onHook, getState, getDebug }) {
   const server = http.createServer((req, res) => {
     if (req.method === 'POST' && req.url === '/hook') {
       let body = '';
@@ -110,6 +112,11 @@ function startServer(port, { onHook, getState }) {
         try { onHook(JSON.parse(body)); } catch { /* ignore */ }
         res.writeHead(204).end();
       });
+      return;
+    }
+    if (req.method === 'GET' && req.url === '/debug') {
+      res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(getDebug(), null, 2));
       return;
     }
     if (req.method === 'GET' && req.url === '/state') {
@@ -163,8 +170,16 @@ async function cmdRun(cfg) {
   };
 
   let hookTimer = null;
+  const hookStats = { count: 0, last: null };
   startServer(cfg.port, {
+    getDebug: () => ({
+      hooks_received: hookStats.count,
+      last_hook: hookStats.last,
+      claude_usage_from_status_line: readStatuslineUsage(),
+    }),
     onHook: (evt) => {
+      hookStats.count++;
+      hookStats.last = { event: evt.hook_event_name, at: clock() };
       if (engine.hooks.handle(evt)) {
         clearTimeout(hookTimer);
         hookTimer = setTimeout(tick, 150);   // react quickly to hook events
