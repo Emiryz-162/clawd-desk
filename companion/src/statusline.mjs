@@ -16,6 +16,8 @@ import path from 'node:path';
 
 const DIR = path.join(os.homedir(), '.clawd-desk');
 
+// Runs as `node src/statusline.mjs` from source, or `clawd-desk.exe statusline`.
+export function runStatusline() {
 let raw = '';
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', (c) => { raw += c; });
@@ -55,3 +57,6 @@ process.stdin.on('end', () => {
   if (o.context_window?.used_percentage != null) parts.push(`ctx ${Math.round(o.context_window.used_percentage)}%`);
   process.stdout.write(parts.join(' · '));
 });
+}
+
+if (/[\\/]statusline\.mjs$/.test(process.argv[1] || '')) runStatusline();

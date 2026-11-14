@@ -22,8 +22,7 @@ A tiny Clawd for your desk. It shows your **Claude Code** and **Codex** usage li
 | **The board** | ESP32-2432S028R, also called "Cheap Yellow Display" or CYD (2.8", 320×240). About $10–15 online. |
 | **A USB data cable** | Some cables only charge. If your computer doesn't see the board, try another cable. |
 | **A case** (optional) | The [clawd-meter case on MakerWorld](https://makerworld.com/en/models/2906020-clawd-meter) fits this board. Print it in orange. See [hardware/](hardware/README.md). |
-| **A computer** | Windows, macOS or Linux, with Claude Code and/or Codex. You need [Node.js](https://nodejs.org) 18 or newer. |
-| **PlatformIO** | Used to put the firmware on the board. The easiest way is the [PlatformIO extension for VS Code](https://platformio.org/install/ide?install=vscode). |
+| **A computer** | With Claude Code and/or Codex, and Chrome or Edge for the one-time install. |
 
 ## How it works
 
@@ -38,103 +37,75 @@ Everything stays on your computer and your home network. The companion reads fil
 
 ---
 
-## Setup (about 15 minutes)
+## Setup (about 5 minutes)
 
-### Step 1: Get the code
-
-Click **Code → Download ZIP** on GitHub and unzip it, or:
-
-```bash
-git clone https://github.com/Emiryz-162/clawd-desk.git
-```
-
-### Step 2: Put the firmware on the board
+### Step 1: Put Clawd Desk on the board
 
 1. Plug the board into your computer with the USB cable.
-2. In VS Code, open the `firmware` folder. PlatformIO downloads what it needs the first time, which takes a few minutes.
-3. Click the PlatformIO icon in the left bar and pick your board type under **Project Tasks**:
+2. Open the **[Clawd Desk installer](https://emiryz-162.github.io/clawd-desk/)** in Chrome or Edge.
+3. Pick your board type and click **Install Clawd Desk**. Not sure which board you have? Start with the first one. If the colors look like a photo negative, install again with the second.
 
-   | Your board | Pick |
-   |---|---|
-   | Most boards (one micro USB port) | `cyd` |
-   | Colors look like a photo negative (white background, blue instead of orange) | `cyd_inv` |
-   | Board with both micro USB and USB-C | `cyd2usb` |
+If it doesn't connect, hold the **BOOT** button on the back of the board and try again.
 
-4. Click **Upload**. If it hangs on `Connecting.....`, hold the **BOOT** button on the back of the board until the upload starts.
+### Step 2: Connect the board to Wi-Fi
 
-Not sure which board you have? Start with `cyd`. If the colors look wrong, upload `cyd_inv` instead. Nothing breaks either way.
-
-<details>
-<summary>Using the terminal instead of VS Code</summary>
-
-```bash
-cd firmware
-pio run -e cyd -t upload
-```
-
-On Windows with the VS Code extension, `pio` is not on your PATH. Use the full path instead:
-
-```powershell
-& "$env:USERPROFILE\.platformio\penv\Scripts\pio.exe" run -e cyd -t upload
-```
-</details>
-
-### Step 3: Connect the board to Wi-Fi
-
-1. The board restarts and shows **Wi-Fi setup**.
+1. The screen says **Wi-Fi setup**.
 2. On your phone, join the Wi-Fi network called **`ClawdDesk-Setup`**.
 3. A page opens. If it doesn't, go to `192.168.4.1` in your browser. Pick your home Wi-Fi and enter its password.
 4. The board connects and shows sample data. The top-left corner says `DEMO · 192.168.x.x`. That's the board's address.
 
-> If the board was used before and remembers a Wi-Fi network, it skips the setup and connects right away. To switch networks, hold **BOOT** for 5 seconds.
+> If the board already remembers a Wi-Fi network, it skips this step. To switch networks, hold **BOOT** for 5 seconds.
 
-### Step 4: Start the companion on your computer
+### Step 3: Set up your computer
 
-Open a terminal in the `companion` folder:
+**Windows:** download **[ClawdDesk-Setup.exe](https://github.com/Emiryz-162/clawd-desk/releases/latest/download/ClawdDesk-Setup.exe)** and double-click it. It finds the screen on your network, connects Claude Code, and starts with Windows from now on. That's it.
 
-```bash
-cd companion
-```
+> Windows may say the app is from an unknown publisher, because it isn't code-signed. Click **More info → Run anyway**. The program is built from this repository by GitHub Actions ([release workflow](.github/workflows/release.yml)).
 
-Tell it where the screen is. `clawd-desk.local` works on most networks. If it doesn't, use the address from the screen's top-left corner, for example `--device 192.168.1.42`:
+**macOS / Linux:** install [Node.js](https://nodejs.org) 18 or newer, download this repository (**Code → Download ZIP**), then in a terminal:
 
 ```bash
-node src/cli.mjs config --device clawd-desk.local
-```
-
-Try it with fake data first. You should see every screen in turn:
-
-```bash
-node src/cli.mjs demo
-```
-
-Press `Ctrl+C` to stop the demo. Then connect Claude Code. This adds two small things to `~/.claude/settings.json` and saves a backup first:
-
-```bash
-node src/cli.mjs install
-```
-
-Finally, start it for real:
-
-```bash
+cd clawd-desk/companion
+node src/cli.mjs setup
 node src/cli.mjs run
 ```
 
-That's it. Open <http://127.0.0.1:8787/> to see exactly what is being sent to the screen.
-
-### Step 5 (optional): Start it automatically
-
-**Windows:** this starts it hidden every time you log in. To undo it, run `node src/cli.mjs autostart off`.
-
-```bash
-node src/cli.mjs autostart
-```
-
-**macOS / Linux:** add a line to your crontab (`crontab -e`). Replace both paths: the project folder, and your Node.js (run `which node` to find it):
+To start it automatically, add a line to your crontab (`crontab -e`). Replace both paths: the project folder, and your Node.js (run `which node` to find it):
 
 ```bash
 @reboot cd /path/to/clawd-desk/companion && /path/to/node src/cli.mjs run >> ~/.clawd-desk/companion.log 2>&1
 ```
+
+Open <http://127.0.0.1:8787/> any time to see exactly what is being sent to the screen.
+
+### Try it without real sessions
+
+`clawd-desk.exe demo` (or `node src/cli.mjs demo`) cycles through every screen with fake data. Press `Ctrl+C` to stop.
+
+### Remove it
+
+`clawd-desk.exe uninstall` in `%LOCALAPPDATA%\ClawdDesk` (or `node src/cli.mjs uninstall`) removes the Claude Code hooks, the status line and the autostart entry. Then delete that folder.
+
+<details>
+<summary><b>For developers: build and flash from source</b></summary>
+
+Firmware ([PlatformIO](https://platformio.org/install/ide?install=vscode)): open `firmware/` in VS Code and upload one of these environments, or use `pio run -e cyd -t upload`.
+
+| Your board | Environment |
+|---|---|
+| Most boards (one micro USB port) | `cyd` |
+| Colors look like a photo negative | `cyd_inv` |
+| Both micro USB and USB-C | `cyd2usb` |
+
+On Windows with the VS Code extension, `pio` isn't on your PATH: `& "$env:USERPROFILE\.platformio\penv\Scripts\pio.exe" run -e cyd -t upload`.
+
+Companion from source (Node.js 18+): `cd companion`, then `node src/cli.mjs setup`. Run `node src/cli.mjs` for all commands.
+
+Build the Windows program: `cd companion && npm install && npm run build:exe` (on Windows).
+Build the installer images: `python tools/build_web_firmware.py` (writes `site/firmware/`).
+
+Releases: push a tag like `v0.2.0` and the [release workflow](.github/workflows/release.yml) attaches `ClawdDesk-Setup.exe` and full firmware images. The installer page is published by the [Pages workflow](.github/workflows/pages.yml) on every push to `main`.
+</details>
 
 ---
 
@@ -175,8 +146,10 @@ If you don't touch anything for 15 seconds, it goes back to Home.
 The screen follows your computer's language automatically. English and Turkish are built in. Any other language falls back to English. To pick one yourself:
 
 ```bash
-node src/cli.mjs config --lang en
+clawd-desk.exe config --lang en
 ```
+
+(From source: `node src/cli.mjs config --lang en`.)
 
 Adding another language takes two small files: `companion/src/i18n.mjs` and `firmware/src/lang.cpp`.
 
@@ -195,11 +168,7 @@ Adding another language takes two small files: `companion/src/i18n.mjs` and `fir
 
 The companion only listens on `127.0.0.1`. Apart from your screen, it only talks to Anthropic, for the usage request and the login renewal.
 
-To undo the Claude Code changes at any time:
-
-```bash
-node src/cli.mjs uninstall
-```
+To undo the Claude Code changes at any time, run `uninstall` (see **Remove it** above).
 
 ---
 
@@ -208,16 +177,16 @@ node src/cli.mjs uninstall
 <details>
 <summary><b>Colors look wrong (white background, blue Clawd)</b></summary>
 
-Upload the `cyd_inv` firmware instead of `cyd`.
+Open the installer again and pick **Inverted colors**.
 </details>
 
 <details>
 <summary><b>"cannot reach the screen" / clawd-desk.local doesn't work</b></summary>
 
-Use the IP address shown in the top-left corner of the screen:
+Use the IP address shown in the top-left corner of the screen. Run the setup again and type it when asked, or:
 
 ```bash
-node src/cli.mjs config --device 192.168.1.42
+clawd-desk.exe config --device 192.168.1.42
 ```
 
 Your computer and the board must be on the same Wi-Fi network. Guest networks often block this.
@@ -232,11 +201,11 @@ Limits only exist on Pro, Max and similar plans. With an API key there's nothing
 </details>
 
 <details>
-<summary><b>The board isn't found when uploading</b></summary>
+<summary><b>The installer doesn't find the board</b></summary>
 
 - Try another USB cable. Many cables only charge.
 - On Windows, the board appears in Device Manager as `USB-SERIAL CH340`. If it doesn't, install the CH340 driver from WCH (search for "CH341SER").
-- Hold BOOT while the upload says `Connecting.....`.
+- Hold BOOT while the installer is connecting.
 </details>
 
 <details>

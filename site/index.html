@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clawd Desk installer</title>
+<meta name="description" content="Install Clawd Desk on an ESP32-2432S028R (Cheap Yellow Display) from your browser.">
+<script type="module" src="https://unpkg.com/esp-web-tools@10.5.2/dist/web/install-button.js?module"></script>
+<style>
+  :root {
+    --bg: #141413; --panel: #1f1e1c; --line: #34322e; --text: #faf9f5;
+    --muted: #a8a49c; --clay: #d97757; --clay-dark: #b85c3f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 48px 20px 64px; }
+  header { display: flex; align-items: center; gap: 20px; margin-bottom: 36px; }
+  h1 { margin: 0; font-size: 34px; line-height: 1.1; }
+  header p { margin: 6px 0 0; color: var(--muted); }
+  .clawd { width: 96px; height: 90px; position: relative; flex-shrink: 0; }
+  .clawd i { position: absolute; background: var(--clay); }
+  .clawd i.eye { background: var(--bg); }
+  ol { list-style: none; counter-reset: step; padding: 0; margin: 0; display: grid; gap: 16px; }
+  li {
+    counter-increment: step; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 20px 20px 20px 64px; position: relative;
+  }
+  li::before {
+    content: counter(step); position: absolute; left: 20px; top: 20px;
+    width: 30px; height: 30px; border-radius: 50%; background: var(--clay); color: var(--bg);
+    font-weight: 700; display: grid; place-items: center;
+  }
+  h2 { margin: 2px 0 6px; font-size: 19px; }
+  li p { margin: 0 0 10px; color: var(--muted); }
+  li p:last-child { margin-bottom: 0; }
+  a { color: var(--clay); }
+  a:hover { color: #e9997d; }
+  code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+  fieldset { border: 0; padding: 0; margin: 12px 0 16px; display: grid; gap: 8px; }
+  label {
+    display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; cursor: pointer;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--bg);
+  }
+  label:has(input:checked) { border-color: var(--clay); }
+  label input { margin-top: 5px; accent-color: var(--clay); }
+  label b { display: block; }
+  label span { color: var(--muted); font-size: 14px; }
+  .btn, esp-web-install-button button[slot="activate"] {
+    display: inline-block; background: var(--clay); color: var(--bg); border: 0; border-radius: 8px;
+    padding: 12px 22px; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none;
+  }
+  .btn:hover, esp-web-install-button button[slot="activate"]:hover { background: #e48867; color: var(--bg); }
+  .note { font-size: 14px; color: var(--muted); }
+  .warn { color: #f2c14e; }
+  footer { margin-top: 40px; font-size: 14px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="clawd" aria-hidden="true">
+      <i style="left:12px;top:18px;width:72px;height:42px"></i>
+      <i style="left:0;top:42px;width:12px;height:12px"></i>
+      <i style="left:84px;top:30px;width:12px;height:12px"></i>
+      <i style="left:18px;top:60px;width:6px;height:18px"></i>
+      <i style="left:30px;top:60px;width:6px;height:18px"></i>
+      <i style="left:60px;top:60px;width:6px;height:18px"></i>
+      <i style="left:72px;top:60px;width:6px;height:18px"></i>
+      <i class="eye" style="left:24px;top:30px;width:6px;height:12px"></i>
+      <i class="eye" style="left:66px;top:30px;width:6px;height:12px"></i>
+    </div>
+    <div>
+      <h1>Clawd Desk installer</h1>
+      <p>Put Clawd Desk on your ESP32-2432S028R from the browser. No tools to install.</p>
+    </div>
+  </header>
+
+  <ol>
+    <li>
+      <h2>Plug in the board</h2>
+      <p>Connect it to this computer with a USB <em>data</em> cable. Some cables only charge.</p>
+      <p class="note">Use Chrome or Edge on a computer. Other browsers can't talk to USB devices.</p>
+    </li>
+
+    <li>
+      <h2>Pick your board and install</h2>
+      <p>Not sure? Start with the first one. If the colors look like a photo negative afterwards, install again with the second.</p>
+      <fieldset>
+        <legend class="note">Board type</legend>
+        <label><input type="radio" name="board" value="cyd" checked>
+          <div><b>Most boards</b><span>One micro USB port</span></div></label>
+        <label><input type="radio" name="board" value="cyd_inv">
+          <div><b>Inverted colors</b><span>White background and a blue Clawd with the first option</span></div></label>
+        <label><input type="radio" name="board" value="cyd2usb">
+          <div><b>Two USB ports</b><span>Both micro USB and USB-C</span></div></label>
+      </fieldset>
+      <esp-web-install-button id="install" manifest="firmware/cyd/manifest.json">
+        <button slot="activate">Install Clawd Desk</button>
+        <span slot="unsupported" class="warn">This browser can't flash boards. Please open this page in Chrome or Edge on a computer.</span>
+        <span slot="not-allowed" class="warn">This page must be opened over https.</span>
+      </esp-web-install-button>
+      <p class="note" style="margin-top:12px">Pick the port that says <code>USB-SERIAL CH340</code> or <code>CP210x</code>. If it doesn't connect, hold the <b>BOOT</b> button on the back of the board and try again.</p>
+    </li>
+
+    <li>
+      <h2>Connect it to Wi-Fi</h2>
+      <p>When the screen says <b>Wi-Fi setup</b>, join the <code>ClawdDesk-Setup</code> network on your phone and pick your home Wi-Fi on the page that opens. If no page opens, go to <code>192.168.4.1</code>.</p>
+    </li>
+
+    <li>
+      <h2>Set up your computer</h2>
+      <p><b>Windows:</b> download and run the setup. It finds your screen, connects Claude Code and starts with Windows.</p>
+      <p><a class="btn" href="https://github.com/Emiryz-162/clawd-desk/releases/latest/download/ClawdDesk-Setup.exe">Download ClawdDesk-Setup.exe</a></p>
+      <p class="note">Windows may warn that the app is from an unknown publisher. Click <b>More info → Run anyway</b>.</p>
+      <p><b>macOS / Linux:</b> see the <a href="https://github.com/Emiryz-162/clawd-desk#step-4-start-the-companion-on-your-computer">guide on GitHub</a>.</p>
+    </li>
+  </ol>
+
+  <footer>
+    <p><a href="https://github.com/Emiryz-162/clawd-desk">Source code and full guide on GitHub</a> · MIT license</p>
+    <p>An independent fan project. Not affiliated with Anthropic or OpenAI.</p>
+  </footer>
+</main>
+<script>
+  const button = document.getElementById('install');
+  for (const radio of document.querySelectorAll('input[name="board"]')) {
+    radio.addEventListener('change', () => {
+      button.setAttribute('manifest', `firmware/${radio.value}/manifest.json`);
+    });
+  }
+</script>
+</body>
+</html>

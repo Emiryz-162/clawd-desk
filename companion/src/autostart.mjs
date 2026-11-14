@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { runCommand } from './runtime.mjs';
 
 const startupDir = () => path.join(
   process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'),
@@ -15,11 +15,11 @@ export const logPath = () => path.join(os.homedir(), '.clawd-desk', 'companion.l
 
 export function enableAutostart(extraArgs = []) {
   if (process.platform !== 'win32') throw new Error('autostart is only set up for Windows for now');
-  const cli = fileURLToPath(new URL('./cli.mjs', import.meta.url));
+  const [program, programArgs] = runCommand(extraArgs);
   fs.mkdirSync(path.dirname(logPath()), { recursive: true });
-  const args = ['run', ...extraArgs].join(' ');
   // cmd /c lets us redirect output to a log; window style 0 = hidden
-  const cmd = `cmd /c ""${process.execPath}" "${cli}" ${args} > "${logPath()}" 2>&1"`;
+  const quoted = [program, ...programArgs].map((a) => (/[\s"]/.test(a) || a.includes('\\') ? `"${a}"` : a)).join(' ');
+  const cmd = `cmd /c "${quoted} > "${logPath()}" 2>&1"`;
   const vbs = `' Clawd Desk companion - started at login (remove this file to stop)\r\n`
     + `CreateObject("WScript.Shell").Run "${cmd.replace(/"/g, '""')}", 0, False\r\n`;
   fs.writeFileSync(launcherPath(), vbs);

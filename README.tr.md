@@ -13,43 +13,21 @@ Masanda duran küçük bir Clawd. 10 dolarlık bir ESP32 dokunmatik ekranda **Cl
 - **Üç büyük dokunma bölgesi var:** sol, orta ve sağ.
 - **Gece modu:** Işık sensörü oda kararınca ekranı karartır.
 - **BOOT tuşu:** Arkadaki tuş "sonraki" tuşu olarak çalışır.
+- **Dil:** Ekran, bilgisayarının diline göre Türkçe ya da İngilizce olur.
 
-## Kurulum
+## Kurulum (yaklaşık 5 dakika)
 
-1. **Firmware'i yükle:** VS Code'da `firmware` klasörünü aç. PlatformIO menüsünden kartına uygun ortamı seç ve **Upload**'a bas:
-   - Çoğu kart için `cyd`
-   - Renkler negatif gibi görünüyorsa `cyd_inv`
-   - Kartta hem micro USB hem USB-C varsa `cyd2usb`
+1. **Kartı yükle:** Kartı USB veri kablosuyla tak. Chrome ya da Edge'de **[Clawd Desk yükleyicisini](https://emiryz-162.github.io/clawd-desk/)** aç, kart tipini seç ve **Install Clawd Desk**'e bas.
 2. **Wi-Fi'ye bağla:** Telefonundan `ClawdDesk-Setup` ağına bağlan ve açılan sayfadan evdeki Wi-Fi'yi seç.
-3. **Bilgisayar tarafını kur:** `companion` klasöründe sırayla şunları çalıştır. Ekranın dili bilgisayarının diline göre otomatik seçilir. Başka bir dil istersen sona `--lang en` ekleyebilirsin.
+3. **Bilgisayarı hazırla (Windows):** **[ClawdDesk-Setup.exe](https://github.com/Emiryz-162/clawd-desk/releases/latest/download/ClawdDesk-Setup.exe)** dosyasını indir ve çift tıkla. Program ekranı ağda bulur, Claude Code'u bağlar ve Windows açılışında kendiliğinden başlar.
+   - Windows "bilinmeyen yayıncı" uyarısı verirse **Ek bilgi → Yine de çalıştır**'a bas. Program imzalı değil ama bu repodan GitHub Actions ile derleniyor.
+   - macOS ya da Linux kullanıyorsan İngilizce README'deki adımlara bak.
 
-```bash
-node src/cli.mjs config --device clawd-desk.local
-```
-
-```bash
-node src/cli.mjs install
-```
-
-```bash
-node src/cli.mjs run
-```
-
-Windows'ta açılışta kendiliğinden başlaması için:
-
-```bash
-node src/cli.mjs autostart
-```
-
-Claude Code ayarlarına yaptığı değişiklikleri geri almak için:
-
-```bash
-node src/cli.mjs uninstall
-```
+Kaldırmak için `%LOCALAPPDATA%\ClawdDesk` klasöründe `clawd-desk.exe uninstall` komutunu çalıştır, sonra klasörü sil.
 
 ## Claude limitleri
 
-Companion, Claude limitlerini 3 dakikada bir Claude Code'un bilgisayarındaki girişiyle sorar. Girişin süresi dolunca onu Claude Code'un yaptığı gibi kendisi yeniler. Bunun için Claude Code'da bir kez giriş yapmış olman yeterli.
+Program, Claude limitlerini 3 dakikada bir Claude Code'un bilgisayarındaki girişiyle sorar. Bu istek token harcamaz. Girişin süresi dolunca onu Claude Code'un yaptığı gibi kendisi yeniler. Bunun için Claude Code'da bir kez giriş yapmış olman yeterli.
 
 ## Lisans
 

@@ -11,12 +11,17 @@
     "start": "node src/cli.mjs run",
     "demo": "node src/cli.mjs demo",
     "print": "node src/cli.mjs print",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "build:exe": "node scripts/build-exe.mjs"
   },
   "engines": {
     "node": ">=18"
   },
   "optionalDependencies": {
     "serialport": "^12.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "postject": "1.0.0-alpha.6"
   }
 }

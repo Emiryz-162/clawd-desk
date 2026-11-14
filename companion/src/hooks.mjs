@@ -7,10 +7,9 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { commandFor, MARK } from './runtime.mjs';
 import { CLAUDE_DIR } from './sessions.mjs';
 
-const MARK = '--clawd-desk';
 const EVENTS = ['UserPromptSubmit', 'PreToolUse', 'PostToolUse', 'Notification', 'Stop', 'SessionEnd'];
 const TOOL_EVENTS = new Set(['PreToolUse', 'PostToolUse']);
 
@@ -69,8 +68,7 @@ export class HookState {
 const settingsPath = () => path.join(CLAUDE_DIR, 'settings.json');
 
 export function hookCommand() {
-  const hook = fileURLToPath(new URL('./hook.mjs', import.meta.url)).replace(/\\/g, '/');
-  return `node "${hook}" ${MARK}`;
+  return commandFor('hook');
 }
 
 function readSettings() {
@@ -123,8 +121,7 @@ export function uninstallHooks() {
 const CHAIN_FILE = path.join(os.homedir(), '.clawd-desk', 'statusline-chain.json');
 
 export function statuslineCommand() {
-  const p = fileURLToPath(new URL('./statusline.mjs', import.meta.url)).replace(/\\/g, '/');
-  return `node "${p}" ${MARK}`;
+  return commandFor('statusline');
 }
 
 export function installStatusline() {

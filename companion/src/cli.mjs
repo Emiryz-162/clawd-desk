@@ -4,6 +4,7 @@
 //   node src/cli.mjs run      [--device clawd-desk.local | --serial COM5]
 //   node src/cli.mjs demo     [--device ... | --serial ...]   cycles fake screens
 //   node src/cli.mjs print    prints the JSON once (no device needed)
+//   node src/cli.mjs setup     one-step setup (what the Windows program runs)
 //   node src/cli.mjs install | uninstall   Claude Code hooks + status line
 //   node src/cli.mjs config --device 192.168.1.42 --lang en   saves settings
 //
@@ -23,6 +24,10 @@ import {
 } from './hooks.mjs';
 import { SessionStore } from './sessions.mjs';
 import { StateBuilder } from './state.mjs';
+import { runHook } from './hook.mjs';
+import { INSTALL_DIR, IS_EXE } from './runtime.mjs';
+import { setup, stopCompanions } from './setup.mjs';
+import { runStatusline } from './statusline.mjs';
 import { codexUsage, fetchClaudeUsage, readStatuslineUsage } from './usage.mjs';
 
 const CONFIG_FILE = path.join(os.homedir(), '.clawd-desk', 'config.json');
@@ -232,70 +237,94 @@ async function cmdPrint() {
 }
 
 function help() {
+  const me = IS_EXE ? 'clawd-desk.exe' : 'node src/cli.mjs';
   console.log(`Clawd Desk companion
 
-  node src/cli.mjs config --device <ip|host> [--lang en|tr] [--serial COM5]
+  ${me} setup            find the screen, connect Claude Code, start with Windows
+  ${me} config --device <ip|host> [--lang en|tr] [--serial COM5]
                                     save your settings once
-  node src/cli.mjs run              send live data to the screen
-  node src/cli.mjs demo             cycle through every screen with fake data
-  node src/cli.mjs print            print the screen data once (no device needed)
-  node src/cli.mjs install          add Claude Code hooks + status line
-  node src/cli.mjs uninstall        remove both again
-  node src/cli.mjs autostart [off]  start hidden at Windows login
+  ${me} run              send live data to the screen
+  ${me} demo             cycle through every screen with fake data
+  ${me} print            print the screen data once (no device needed)
+  ${me} install          add Claude Code hooks + status line
+  ${me} uninstall        remove hooks, status line and autostart
+  ${me} autostart [off]  start hidden at Windows login
 
 Any command also takes --device, --serial, --lang and --port.
 
 Config file: ${CONFIG_FILE}`);
 }
 
-const args = parseArgs(process.argv.slice(2));
-const cfg = loadConfig(args);
-setLang(cfg.lang);
-switch (args._[0]) {
-  case 'config': {
-    const next = { ...readConfigFile() };
-    for (const k of ['device', 'serial', 'lang', 'port']) if (args[k] !== undefined) next[k] = args[k];
-    fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
-    fs.writeFileSync(CONFIG_FILE, `${JSON.stringify(next, null, 2)}\n`);
-    console.log(`Saved ${CONFIG_FILE}:\n${JSON.stringify(next, null, 2)}`);
-    break;
-  }
-  case 'run': await cmdRun(cfg); break;
-  case 'demo': await cmdDemo(cfg); break;
-  case 'print': await cmdPrint(); break;
-  case 'install':
-  case 'install-hooks':
-  case 'install-statusline': {
-    const which = args._[0];
-    if (which !== 'install-statusline') {
-      const r = installHooks();
-      console.log(`Hooks added (${r.events.join(', ')}) -> ${r.path}`);
-    }
-    if (which !== 'install-hooks') {
-      const r = installStatusline();
-      console.log(`Status line added${r.chained ? ' (your previous status line still runs)' : ''} -> ${r.path}`);
-    }
-    console.log(`Backup of your previous settings: ${r0()}.clawd-desk.bak`);
-    break;
-  }
-  case 'autostart': {
-    if (args._[1] === 'off') {
-      console.log(disableAutostart() ? 'Autostart turned off.' : 'Autostart was already off.');
-    } else {
-      const extra = [];
-      if (args.device) extra.push('--device', args.device);
-      if (args.serial) extra.push('--serial', args.serial);
-      if (args.lang) extra.push('--lang', args.lang);
-      const p = enableAutostart(extra);
-      console.log(`Will start at Windows login: ${p}\nLog file: ${logPath()}`);
-    }
-    break;
-  }
-  case 'uninstall': {
-    uninstallHooks();
-    const r = uninstallStatusline();
-    console.log(`Clawd Desk hooks and status line removed: ${r.path}`);
-    break;
-  }
-  default: help();
+function saveConfig(values) {
+  const next = { ...readConfigFile(), ...values };
+  fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
+  fs.writeFileSync(CONFIG_FILE, `${JSON.stringify(next, null, 2)}\n`);
+  return next;
 }
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  const cfg = loadConfig(args);
+  setLang(cfg.lang);
+  // Double-clicking the Windows program (no arguments) runs the setup.
+  const command = args._[0] || (IS_EXE ? 'setup' : 'help');
+  switch (command) {
+    case 'hook': runHook(); break;
+    case 'statusline': runStatusline(); break;
+    case 'setup':
+      await setup({ lang: cfg.lang, port: cfg.port, device: args.device, saveConfig });
+      break;
+    case 'config': {
+      const values = {};
+      for (const k of ['device', 'serial', 'lang', 'port']) if (args[k] !== undefined) values[k] = args[k];
+      const next = saveConfig(values);
+      console.log(`Saved ${CONFIG_FILE}:\n${JSON.stringify(next, null, 2)}`);
+      break;
+    }
+    case 'run': await cmdRun(cfg); break;
+    case 'demo': await cmdDemo(cfg); break;
+    case 'print': await cmdPrint(); break;
+    case 'install':
+    case 'install-hooks':
+    case 'install-statusline': {
+      if (command !== 'install-statusline') {
+        const r = installHooks();
+        console.log(`Hooks added (${r.events.join(', ')}) -> ${r.path}`);
+      }
+      if (command !== 'install-hooks') {
+        const r = installStatusline();
+        console.log(`Status line added${r.chained ? ' (your previous status line still runs)' : ''} -> ${r.path}`);
+      }
+      console.log(`Backup of your previous settings: ${r0()}.clawd-desk.bak`);
+      break;
+    }
+    case 'autostart': {
+      if (args._[1] === 'off') {
+        console.log(disableAutostart() ? 'Autostart turned off.' : 'Autostart was already off.');
+      } else {
+        const extra = [];
+        if (args.device) extra.push('--device', args.device);
+        if (args.serial) extra.push('--serial', args.serial);
+        if (args.lang) extra.push('--lang', args.lang);
+        const p = enableAutostart(extra);
+        console.log(`Will start at Windows login: ${p}\nLog file: ${logPath()}`);
+      }
+      break;
+    }
+    case 'uninstall': {
+      uninstallHooks();
+      const r = uninstallStatusline();
+      console.log(`Clawd Desk hooks and status line removed: ${r.path}`);
+      if (disableAutostart()) console.log('Autostart turned off.');
+      stopCompanions();
+      if (IS_EXE) console.log(`You can now delete ${INSTALL_DIR}`);
+      break;
+    }
+    default: help();
+  }
+}
+
+main().catch((e) => {
+  console.error(e.message);
+  process.exitCode = 1;
+});
