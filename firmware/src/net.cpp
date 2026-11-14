@@ -8,8 +8,8 @@
 #include "data.h"
 
 static WebServer server(80);
-static bool serverUp = false;
-static void (*portalCb)() = nullptr;
+static WiFiManager wm;
+static bool servicesUp = false;
 
 static String serialBuf;
 
@@ -33,35 +33,39 @@ static void handleRoot() {
   server.send(200, "text/plain; charset=utf-8", s);
 }
 
-void netBegin(void (*onPortal)()) {
-  portalCb = onPortal;
-  WiFi.mode(WIFI_STA);
-  WiFi.setHostname(CLAWD_HOSTNAME);
-
-  WiFiManager wm;
-  wm.setConfigPortalTimeout(180);
-  wm.setConnectTimeout(20);
-  wm.setAPCallback([](WiFiManager*) {
-    if (portalCb) portalCb();
-  });
-  const bool ok = wm.autoConnect(CLAWD_AP_NAME);
-  if (!ok) {
-    Serial.println("[net] no Wi-Fi, continuing with USB serial only");
-    return;
-  }
+// Runs once, the first time we are on Wi-Fi.
+static void startServices() {
   Serial.printf("[net] connected, ip=%s\n", WiFi.localIP().toString().c_str());
-
   if (MDNS.begin(CLAWD_HOSTNAME)) MDNS.addService("http", "tcp", 80);
   configTzTime(CLAWD_TZ, "pool.ntp.org", "time.google.com");
-
   server.on("/", HTTP_GET, handleRoot);
   server.on("/state", HTTP_POST, handleState);
   server.begin();
-  serverUp = true;
+  servicesUp = true;
+}
+
+void netBegin() {
+  WiFi.mode(WIFI_STA);
+  WiFi.setHostname(CLAWD_HOSTNAME);
+  WiFi.setAutoReconnect(true);
+
+  // Non-blocking: if there is no saved Wi-Fi (or it can't be reached), the
+  // setup hotspot stays open, with no time limit, while the screen keeps
+  // running. The moment Wi-Fi works, the hotspot closes by itself.
+  wm.setConfigPortalBlocking(false);
+  wm.setConnectTimeout(20);
+  wm.setConfigPortalTimeout(0);
+  if (wm.autoConnect(CLAWD_AP_NAME)) startServices();
+  else Serial.println("[net] no Wi-Fi yet, setup hotspot " CLAWD_AP_NAME " is open");
 }
 
 void netLoop() {
-  if (serverUp) server.handleClient();
+  wm.process();
+  if (WiFi.status() == WL_CONNECTED) {
+    if (wm.getConfigPortalActive()) wm.stopConfigPortal();
+    if (!servicesUp) startServices();
+  }
+  if (servicesUp) server.handleClient();
 
   // Same JSON can arrive over USB serial, one document per line.
   while (Serial.available()) {
@@ -80,6 +84,8 @@ void netLoop() {
 
 bool netConnected() { return WiFi.status() == WL_CONNECTED; }
 
+bool netSetupOpen() { return wm.getConfigPortalActive() && !netConnected(); }
+
 String netIp() { return netConnected() ? WiFi.localIP().toString() : String("USB"); }
 
 bool netClock(char* out, size_t n) {
@@ -90,7 +96,6 @@ bool netClock(char* out, size_t n) {
 }
 
 void netResetWifi() {
-  WiFiManager wm;
   wm.resetSettings();
   delay(200);
   ESP.restart();

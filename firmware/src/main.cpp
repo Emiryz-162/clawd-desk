@@ -219,11 +219,7 @@ void setup() {
   loadDemoState();
 
   showMessage(L().hello, L().connecting);
-  netBegin([] {
-    static char body[200];
-    snprintf(body, sizeof(body), L().wifiSetupBody, CLAWD_AP_NAME);
-    showMessage(L().wifiSetup, body);
-  });
+  netBegin();
 
   buildRotation();
   go(SCR_HOME);
@@ -264,6 +260,17 @@ void loop() {
 
   const int ri = rotIndex(ui.screen);
   if (ri >= 0 && now - lastRotate > ROTATE_MS) go(rot[(ri + 1) % rotN]);
+
+  // No Wi-Fi yet: keep the setup instructions on screen until it's done.
+  static char setupBody[200];
+  if (netSetupOpen()) {
+    snprintf(setupBody, sizeof(setupBody), L().wifiSetupBody, CLAWD_AP_NAME);
+    ui.screen = SCR_MESSAGE;
+    ui.msgTitle = L().wifiSetup;
+    ui.msgBody = setupBody;
+  } else if (ui.screen == SCR_MESSAGE) {
+    go(SCR_HOME);
+  }
 
   if (now - lastFrame >= ANIM_MS) {
     lastFrame = now;
