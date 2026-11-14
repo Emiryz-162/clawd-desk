@@ -1,8 +1,21 @@
 # Clawd Desk
 
+![Clawd Desk: an orange 3D-printed Clawd with a small screen showing Claude Code and Codex usage](docs/images/hero.jpg)
+
 A tiny Clawd for your desk. It shows your **Claude Code** and **Codex** usage limits, what your agent is doing right now, commands waiting for your approval, and your recent sessions, on a $10 ESP32 touchscreen.
 
-[Türkçe](README.tr.md)
+**[Install it from your browser](https://emiryz-162.github.io/clawd-desk/)** · [Türkçe](README.tr.md)
+
+<table>
+  <tr>
+    <td><img src="docs/images/screen-home.png" alt="Home screen: Clawd working, with Claude and Codex 5-hour bars"></td>
+    <td><img src="docs/images/screen-limits.png" alt="Limits screen: 5-hour rings and weekly bars for Claude Code and Codex"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/screen-live.png" alt="Live session screen: current step and the last steps"></td>
+    <td><img src="docs/images/screen-attention.png" alt="Needs approval screen: Codex wants to run npm run build"></td>
+  </tr>
+</table>
 
 > An independent fan project. Not affiliated with, endorsed by or sponsored by Anthropic or OpenAI.
 

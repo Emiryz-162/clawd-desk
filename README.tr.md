@@ -1,5 +1,7 @@
 # Clawd Desk (Türkçe)
 
+![Clawd Desk](docs/images/hero.jpg)
+
 Masanda duran küçük bir Clawd. 10 dolarlık bir ESP32 dokunmatik ekranda **Claude Code** ve **Codex** limitlerini, ajanının şu an ne yaptığını, onay bekleyen komutları ve son oturumlarını gösterir.
 
 [English](README.md) · Ayrıntılı rehber ve sorun giderme İngilizce README'de.

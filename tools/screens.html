@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Clawd Desk screens</title>
+<!--
+  A pixel-faithful HTML copy of the device screens (firmware/src/ui.cpp),
+  used to make the README images:
+    msedge --headless --screenshot=home.png --window-size=1280,960 "tools/screens.html?screen=home"
+  Screens: home, limits, live, attention, sessions, detail, done, night
+-->
+<style>
+  :root {
+    --bg: #141413; --panel: #1F1E1C; --track: #34322E; --text: #FAF9F5; --muted: #A8A49C;
+    --soft: #CFCBC2; --clay: #D97757; --clay-lt: #E08A6B; --codex: #7FA7D9; --amber: #F2C14E;
+    --green: #8FC27A; --idle: #6B6862; --dot: #4A4844;
+  }
+  html, body { margin: 0; background: #000; }
+  .screen {
+    width: 320px; height: 240px; position: relative; overflow: hidden; background: var(--bg);
+    color: var(--text); font-family: Arial, Helvetica, sans-serif; transform: scale(4); transform-origin: 0 0;
+  }
+  .abs { position: absolute; }
+  .label { font: bold 8.5px Arial, sans-serif; letter-spacing: 0.02em; color: var(--muted); }
+  .mono { font-family: Consolas, "Courier New", monospace; font-size: 10px; }
+  .bar { height: 7px; border-radius: 4px; background: var(--track); overflow: hidden; }
+  .bar > i { display: block; height: 100%; border-radius: 4px; }
+  .card { background: var(--panel); border-radius: 10px; }
+  .ring { width: 60px; height: 60px; border-radius: 50%; display: grid; place-items: center; }
+  .ring > div { width: 46px; height: 46px; border-radius: 50%; background: var(--panel); display: grid; place-items: center; font: bold 13px Arial; }
+  .dots { position: absolute; bottom: 6px; left: 0; right: 0; display: flex; justify-content: center; gap: 4px; }
+  .dots i { height: 5px; width: 5px; border-radius: 3px; background: var(--dot); }
+  .dots i.on { width: 14px; background: var(--text); }
+  .px { position: absolute; }
+</style>
+</head>
+<body>
+<div class="screen" id="s"></div>
+<script>
+const S = document.getElementById('s');
+const screen = new URLSearchParams(location.search).get('screen') || 'home';
+
+// Clawd sprite, same pixels as firmware/src/clawd.cpp (16 x 15 units)
+function clawd(x, y, size, mood, body = '#D97757', eye = '#141413') {
+  const u = size / 16, out = [];
+  const px = (a, b, w, h, c) => out.push(`<i class="px" style="left:${x + a * u}px;top:${y + (b + 3) * u}px;width:${w * u}px;height:${h * u}px;background:${c}"></i>`);
+  let la = 4, ra = 4;
+  if (mood === 'waiting') ra = 0;
+  if (mood === 'happy') { la = ra = 1; }
+  px(2, 1, 12, 7, body); px(0, la, 2, 2, body); px(14, ra, 2, 2, body);
+  for (const lx of [3, 5, 10, 12]) px(lx, 8, 1, 3, body);
+  if (mood === 'idle') { px(4, 3, 1, 2, eye); px(11, 3, 1, 2, eye); }
+  if (mood === 'working') { px(4, 4, 1, 1.4, eye); px(11, 4, 1, 1.4, eye); px(6, -1.5, 1, 1, '#FAF9F5'); px(9.5, -2.5, 1, 1, '#FAF9F5'); }
+  if (mood === 'waiting') { px(4, 2.5, 1, 2.5, eye); px(11, 2.5, 1, 2.5, eye); px(0.5, -2.8, 1, 2.2, '#FAF9F5'); px(0.5, 0, 1, 0.8, '#FAF9F5'); }
+  if (mood === 'happy') { for (const [a, b] of [[3, 4], [4, 3], [5, 4], [10, 4], [11, 3], [12, 4]]) px(a, b, 1, 1, eye); }
+  return out.join('');
+}
+
+const header = (left, right = '14:32', color = 'var(--muted)') =>
+  `<div class="abs label" style="left:14px;top:13px;color:${color}">${left}</div><div class="abs label" style="right:14px;top:13px;color:${color}">${right}</div>`;
+const dots = (n, on) => `<div class="dots">${Array.from({ length: n }, (_, i) => `<i class="${i === on ? 'on' : ''}"></i>`).join('')}</div>`;
+const limitRow = (y, name, pct, color) => `
+  <div class="abs" style="left:14px;top:${y}px;width:72px;font-size:9.5px;color:var(--muted)">${name} 5h</div>
+  <div class="abs bar" style="left:92px;top:${y + 3}px;width:172px"><i style="width:${pct}%;background:${color}"></i></div>
+  <div class="abs" style="right:14px;top:${y}px;font:bold 11px Arial">${pct}%</div>`;
+
+const views = {
+  home: () => header('CLAWD DESK') + clawd(18, 46, 108, 'working') + `
+    <div class="abs" style="left:144px;top:76px;font:bold 25px Arial">Working</div>
+    <div class="abs mono" style="left:144px;top:108px;font-size:11.5px;color:var(--clay-lt)">desk-buddy</div>
+    <div class="abs" style="left:144px;top:125px;font-size:11px;color:var(--muted)">12m · 47 steps · 3/5 tasks</div>`
+    + limitRow(186, 'Claude', 62, 'var(--clay)') + limitRow(204, 'Codex', 18, 'var(--codex)') + dots(3, 0),
+
+  limits: () => header('LIMITS') + [['Claude Code', 'var(--clay)', 62, '1h 48m', 41, 'resets Mon 09:00'], ['Codex', 'var(--codex)', 18, '3h 10m', 33, 'resets Wed 14:00']]
+    .map(([n, c, p, r, w, rw], i) => {
+      const x = 12 + i * 152;
+      return `<div class="abs card" style="left:${x}px;top:30px;width:144px;height:176px">
+        <i class="abs" style="left:10px;top:11px;width:8px;height:8px;border-radius:50%;background:${c}"></i>
+        <div class="abs" style="left:23px;top:8px;font:bold 11.5px Arial">${n}</div>
+        <div class="abs ring" style="left:10px;top:36px;background:conic-gradient(${c} 0 ${p}%, var(--track) ${p}% 100%)"><div>${p}%</div></div>
+        <div class="abs label" style="left:78px;top:50px">5 HOURS</div>
+        <div class="abs" style="left:78px;top:64px;font:bold 11.5px Arial">${r}</div>
+        <div class="abs label" style="left:10px;top:116px">WEEKLY</div>
+        <div class="abs label" style="right:10px;top:116px;color:var(--text)">${w}%</div>
+        <div class="abs bar" style="left:10px;top:130px;width:124px;height:6px"><i style="width:${w}%;background:${c}"></i></div>
+        <div class="abs" style="left:10px;top:146px;font-size:9.5px;color:var(--muted)">${rw}</div></div>`;
+    }).join('') + dots(3, 1),
+
+  live: () => `
+    <i class="abs" style="left:14px;top:14px;width:8px;height:8px;border-radius:50%;background:var(--clay)"></i>
+    <div class="abs" style="left:27px;top:10px;font:bold 13px Arial">desk-buddy</div>
+    <div class="abs mono" style="right:14px;top:12px;color:var(--muted)">12:04</div>
+    <div class="abs" style="left:14px;top:29px;font-size:9.5px;color:var(--muted)">Claude Code · Opus 5.5 · context 84k</div>
+    <div class="abs card" style="left:14px;top:45px;width:292px;height:46px;border-radius:8px"></div>
+    <div class="abs" style="left:22px;top:52px;background:var(--clay);color:var(--bg);font:bold 8.5px Arial;padding:2px 5px;border-radius:3px">EDIT</div>
+    <div class="abs mono" style="left:60px;top:53px;font-size:11px">src/ui/limits.cpp</div>
+    <div class="abs" style="left:22px;top:73px;font-size:11px;color:var(--muted)">Polishing the ring chart</div>
+    <div class="abs label" style="left:14px;top:100px">LAST STEPS</div>`
+    + [['READ', 'var(--codex)', 'src/ui/screens.cpp', '18s'], ['BASH', 'var(--amber)', 'pio run -e cyd', '41s'], ['EDIT', 'var(--clay)', 'src/net/usage.cpp', '1m']]
+      .map(([t, c, x, a], i) => `<div class="abs mono" style="left:14px;top:${114 + i * 15}px;color:${c};font-weight:bold">${t}</div>
+        <div class="abs mono" style="left:56px;top:${114 + i * 15}px">${x}</div>
+        <div class="abs mono" style="right:14px;top:${114 + i * 15}px;color:var(--muted)">${a}</div>`).join('')
+    + `<div class="abs" style="left:14px;top:205px;font-size:9.5px;color:var(--muted)">Tasks 3/5</div>
+    <div class="abs bar" style="left:100px;top:208px;width:206px;height:6px"><i style="width:60%;background:var(--clay)"></i></div>` + dots(3, 2),
+
+  attention: () => { S.style.background = 'var(--clay)'; return header('ATTENTION', '14:32', 'var(--bg)') + clawd(14, 66, 92, 'waiting', '#141413', '#D97757') + `
+    <div class="abs" style="left:118px;top:54px;font:bold 8.5px Arial;color:var(--bg)">NEEDS APPROVAL</div>
+    <div class="abs" style="left:118px;top:68px;width:188px;font:bold 15px/18px Arial;color:var(--bg)">Codex wants to run a command</div>
+    <div class="abs mono" style="left:118px;top:112px;width:172px;padding:5px 8px;border-radius:5px;background:var(--bg);font-size:11px">$ npm run build</div>
+    <div class="abs" style="left:118px;top:144px;font-size:9.5px;color:var(--bg)">api-server · waiting 2m</div>
+    <div class="abs" style="left:14px;top:210px;width:292px;height:1px;background:#A9553A"></div>
+    <div class="abs" style="left:14px;top:217px;font:bold 8.5px Arial;color:var(--bg)">Approve on your computer · tap middle: details</div>`; },
+};
+S.innerHTML = (views[screen] || views.home)();
+</script>
+</body>
+</html>
