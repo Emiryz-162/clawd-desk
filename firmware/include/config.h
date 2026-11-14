@@ -4,17 +4,24 @@
 // ---------------------------------------------------------------------------
 #include <Arduino.h>
 
+// Language of the fixed labels until the companion sends its own ("en" / "tr")
+#define CLAWD_LANG       "en"
+
 // Network
 #define CLAWD_HOSTNAME   "clawd-desk"          // -> http://clawd-desk.local
-#define CLAWD_AP_NAME    "ClawdDesk-Kurulum"   // Wi-Fi setup hotspot name
-#define CLAWD_TZ         "<+03>-3"             // POSIX TZ string (Türkiye = UTC+3)
+#define CLAWD_AP_NAME    "ClawdDesk-Setup"     // Wi-Fi setup hotspot name
+// Your time zone as a POSIX TZ string, used for the clock.
+// Examples: "<+03>-3" Türkiye, "CET-1CEST,M3.5.0,M10.5.0/3" Central Europe,
+// "GMT0BST,M3.5.0/1,M10.5.0" UK, "EST5EDT,M3.2.0,M11.1.0" US East,
+// "PST8PDT,M3.2.0,M11.1.0" US West, "JST-9" Japan.
+#define CLAWD_TZ         "<+03>-3"
 
 // Timing (milliseconds)
 #define ROTATE_MS        10000   // auto-rotation between Home / Limits / Live
 #define BACK_HOME_MS     15000   // list & detail fall back to Home after this
 #define DONE_SHOW_MS      6000   // "Bitti!" celebration length
 #define ANIM_MS            280   // Clawd animation frame time
-#define STALE_MS        300000   // no data for 5 min -> "BAĞLANTI YOK"
+#define STALE_MS        300000   // no data for 5 min -> "NO CONNECTION"
 #define LIMIT_ALERT_PCT     90   // jump to Limits once when a window crosses this
 
 // Night mode via the on-board light sensor (LDR, GPIO34).
@@ -77,7 +84,7 @@ constexpr uint16_t C_NIGHT_TXT = rgb(0x8A8680);
 constexpr uint16_t C_NIGHT_CLD = rgb(0x7A4532);
 constexpr uint16_t C_BLACK     = 0x0000;
 
-// Fonts (u8g2 "_te" fonts include Turkish letters: ğ ş ı İ ö ü ç)
+// Fonts (u8g2 "_te" fonts cover Latin-1 + Latin Extended-A, e.g. ğ ş ı İ ö ü ç)
 #define F_LABEL   u8g2_font_helvB08_te
 #define F_SMALL   u8g2_font_helvR08_te
 #define F_MONO    u8g2_font_6x12_te

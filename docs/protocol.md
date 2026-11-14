@@ -1,45 +1,46 @@
-# Ekran protokolü
+# Screen protocol
 
-Ekran tek bir JSON belgesi bekler. Her yeni belge öncekinin yerine geçer. Tüm metinleri bilgisayar hazırlar, ekran sadece çizer.
+The screen accepts one JSON document at a time. Each new document replaces the previous one. The computer prepares all the text, and the screen just draws it.
 
-- **Wi-Fi:** `POST http://clawd-desk.local/state` (gövde = JSON)
-- **USB:** 115200 baud, her satıra bir JSON belgesi
-- **Durum kontrolü:** `GET http://clawd-desk.local/` adresi düz metin döner
+- **Wi-Fi:** `POST http://clawd-desk.local/state` with the JSON as the body
+- **USB:** 115200 baud, one JSON document per line
+- **Health check:** `GET http://clawd-desk.local/` returns plain text
 
-Fontlar Latin-1 ve Latin Extended-A karakterlerini kapsar, Türkçe harflerin hepsi var. Emoji ve `…` gibi karakterler görünmez. Companion bunları kendisi temizler.
+The fonts cover Latin-1 and Latin Extended-A, which includes most European letters. Emoji and characters like `…` are not drawn, and the companion removes them before sending.
 
 ```jsonc
 {
   "v": 1,
-  "clock": "14:32",                 // NTP yoksa bu kullanılır
-  "mode": "working",                // working | waiting | done | idle  -> Clawd'ın ruh hâli, LED
-  "home": { "title": "Çalışıyor", "project": "desk-buddy", "sub": "12dk · 47 adım" },
-  "limits": [                       // ilk ikisi gösterilir
+  "lang": "en",                     // "en" | "tr": language of the fixed labels on the device
+  "clock": "14:32",                 // used only if the board has no NTP time yet
+  "mode": "working",                // working | waiting | done | idle -> Clawd's mood and the LED
+  "home": { "title": "Working", "project": "desk-buddy", "sub": "12m · 47 steps" },
+  "limits": [                       // the first two are shown
     { "name": "Claude Code", "short": "Claude", "color": "#D97757",
-      "p5": 62, "r5": "1sa 48dk",   // 5 saatlik pencere: yüzde + sıfırlanmaya kalan
-      "pw": 41, "rw": "Pzt 09:00 sıfırlanır" }   // haftalık
+      "p5": 62, "r5": "1h 48m",     // 5-hour window: percent used + time until reset
+      "pw": 41, "rw": "resets Mon 09:00" }   // weekly window
   ],
-  "live": {                         // null -> "Canlı oturum" döngüden çıkar
-    "project": "desk-buddy", "elapsed": "12:04", "meta": "Claude Code · Opus 5.5 · bağlam 84k",
-    "tag": "EDIT", "target": "src/ui/limits.cpp", "desc": "Halka grafiği düzenliyor",
+  "live": {                         // null -> the Live screen leaves the rotation
+    "project": "desk-buddy", "elapsed": "12:04", "meta": "Claude Code · Opus 5.5 · context 84k",
+    "tag": "EDIT", "target": "src/ui/limits.cpp", "desc": "Polishing the ring chart",
     "steps": [ { "tag": "READ", "text": "src/ui/screens.cpp", "ago": "18s" } ],
     "todo_done": 3, "todo_total": 5
   },
-  "attention": {                    // null değilse ekran "Onay bekliyor"a kilitlenir
-    "title": "Codex bir komut çalıştırmak istiyor", "cmd": "$ npm run build", "meta": "api-server · 2dk bekliyor"
+  "attention": {                    // not null -> the screen locks on "Needs approval"
+    "title": "Codex wants to run a command", "cmd": "$ npm run build", "meta": "api-server · waiting 2m"
   },
-  "done": { "id": 17, "project": "desk-buddy", "meta": "14dk · 6 dosya" },   // her yeni id bir kez "Bitti!" gösterir
-  "sessions": [                     // en fazla 6
+  "done": { "id": 17, "project": "desk-buddy", "meta": "14m · 6 files" },   // each new id shows "Done!" once
+  "sessions": [                     // up to 6
     { "name": "desk-buddy", "tool": "Claude Code",
-      "status": "working",          // working | waiting | done | idle  -> nokta rengi
-      "status_label": "Çalışıyor", "ago": "şimdi",
-      "prompt": "Limit ekranına halka grafik ekle",
-      "stats": [["12dk","SÜRE"],["47","ADIM"],["6","DOSYA"],["84k","TOKEN"]],
-      "last": "Halka grafiği tek fonksiyona topladım..." }
+      "status": "working",          // working | waiting | done | idle -> dot color
+      "status_label": "Working", "ago": "now",
+      "prompt": "Add a ring chart to the limits screen",
+      "stats": [["12m","TIME"],["47","STEPS"],["6","FILES"],["84k","TOKENS"]],
+      "last": "Moved the ring drawing into one function..." }
   ]
 }
 ```
 
-Etiket renkleri: `EDIT`/`WRITE` turuncu, `READ`/`FIND` mavi, `BASH`/`RUN` sarı, `WEB` yeşil, diğerleri gri.
+Tag colors: `EDIT`/`WRITE` orange, `READ`/`FIND` blue, `BASH`/`RUN` yellow, `WEB` green, anything else gray.
 
-Bilgisayardan en az 5 dakika veri gelmezse ekranın sol üstünde `BAĞLANTI YOK` yazar ve LED söner.
+If no update arrives for 5 minutes, the top-left corner says `NO CONNECTION` and the LED turns off.

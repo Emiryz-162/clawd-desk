@@ -50,8 +50,8 @@ process.stdin.on('end', () => {
   } catch { /* no chain */ }
 
   const parts = [o.model?.display_name || 'Claude'];
-  if (five) parts.push(`5s %${Math.round(five.used_percentage)}`);
-  if (week) parts.push(`hafta %${Math.round(week.used_percentage)}`);
-  if (o.context_window?.used_percentage != null) parts.push(`bağlam %${Math.round(o.context_window.used_percentage)}`);
+  if (five) parts.push(`5h ${Math.round(five.used_percentage)}%`);
+  if (week) parts.push(`week ${Math.round(week.used_percentage)}%`);
+  if (o.context_window?.used_percentage != null) parts.push(`ctx ${Math.round(o.context_window.used_percentage)}%`);
   process.stdout.write(parts.join(' · '));
 });

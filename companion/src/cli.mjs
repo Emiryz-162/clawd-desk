@@ -5,9 +5,10 @@
 //   node src/cli.mjs demo     [--device ... | --serial ...]   cycles fake screens
 //   node src/cli.mjs print    prints the JSON once (no device needed)
 //   node src/cli.mjs install | uninstall   Claude Code hooks + status line
+//   node src/cli.mjs config --device 192.168.1.42 --lang en   saves settings
 //
-// Settings can also live in ~/.clawd-desk/config.json:
-//   { "device": "192.168.1.42", "serial": null, "port": 8787, "interval": 2 }
+// Settings live in ~/.clawd-desk/config.json:
+//   { "device": "192.168.1.42", "serial": null, "lang": "en", "port": 8787, "interval": 2 }
 import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
@@ -15,6 +16,7 @@ import path from 'node:path';
 import { disableAutostart, enableAutostart, logPath } from './autostart.mjs';
 import { DEMO_STEPS } from './demo.mjs';
 import { DeviceLink } from './device.mjs';
+import { setLang } from './i18n.mjs';
 import { clock } from './format.mjs';
 import {
   HookState, installHooks, installStatusline, uninstallHooks, uninstallStatusline,
@@ -24,6 +26,7 @@ import { StateBuilder } from './state.mjs';
 import { codexUsage, fetchClaudeUsage, readStatuslineUsage } from './usage.mjs';
 
 const CONFIG_FILE = path.join(os.homedir(), '.clawd-desk', 'config.json');
+const r0 = () => path.join(process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude'), 'settings.json');
 
 function parseArgs(argv) {
   const out = { _: [] };
@@ -37,12 +40,18 @@ function parseArgs(argv) {
   return out;
 }
 
-function loadConfig(args) {
-  let file = {};
+function readConfigFile() {
   try {
-    file = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-  } catch { /* no config yet */ }
+    return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+  } catch {
+    return {};
+  }
+}
+
+function loadConfig(args) {
+  const file = readConfigFile();
   return {
+    lang: args.lang || process.env.CLAWD_DESK_LANG || file.lang || 'en',
     device: args.device || process.env.CLAWD_DESK_DEVICE || file.device || 'clawd-desk.local',
     serial: args.serial || process.env.CLAWD_DESK_SERIAL || file.serial || null,
     port: Number(args.port || process.env.CLAWD_DESK_PORT || file.port || 8787),
@@ -77,10 +86,10 @@ function createEngine() {
           if (!u.error || apiUsage.error) apiUsage = u;
         }
         claudeUsage = apiUsage;
-        source = apiUsage.error ? `yok (${apiUsage.error})` : 'oauth';
+        source = apiUsage.error ? `none (${apiUsage.error})` : 'oauth';
       }
       if (source !== lastSource) {
-        log(`Claude limit kaynağı: ${source}`);
+        log(`Claude limits source: ${source}`);
         lastSource = source;
       }
       return builder.build({
@@ -98,8 +107,8 @@ const PAGE = `<!doctype html><meta charset="utf-8"><title>Clawd Desk</title>
 <style>body{font:14px system-ui;background:#141413;color:#FAF9F5;margin:24px}
 pre{background:#1F1E1C;padding:16px;border-radius:8px;overflow:auto}h1{font-size:20px}
 .m{color:#A8A49C}</style><h1>Clawd Desk</h1>
-<p class="m">Bağlantı kontrolü (hook'lar ve status line):</p><pre id="d">...</pre>
-<p class="m">Ekrana giden veri, her 2 saniyede yenilenir.</p><pre id="o">...</pre>
+<p class="m">Connection check (hooks and status line):</p><pre id="d">...</pre>
+<p class="m">Data sent to the screen, refreshed every 2 seconds.</p><pre id="o">...</pre>
 <script>async function t(){try{const r=await fetch('/state');document.getElementById('o').textContent=JSON.stringify(await r.json(),null,2);
 const d=await fetch('/debug');document.getElementById('d').textContent=JSON.stringify(await d.json(),null,2)}catch(e){}}
 t();setInterval(t,2000)</script>`;
@@ -132,7 +141,7 @@ function startServer(port, { onHook, getState, getDebug }) {
     res.writeHead(404).end();
   });
   server.on('error', (e) => {
-    console.error(e.code === 'EADDRINUSE' ? `Port ${port} kullanımda. Companion zaten çalışıyor olabilir.` : e.message);
+    console.error(e.code === 'EADDRINUSE' ? `Port ${port} is in use. The companion is probably already running.` : e.message);
     process.exit(1);
   });
   server.listen(port, '127.0.0.1');
@@ -163,7 +172,7 @@ async function cmdRun(cfg) {
         }
       }
     } catch (e) {
-      log('hata:', e.message);
+      log('error:', e.message);
     } finally {
       busy = false;
       if (again) { again = false; setTimeout(tick, 50); }
@@ -189,18 +198,18 @@ async function cmdRun(cfg) {
     getState: () => state,
   });
 
-  log(`Clawd Desk companion çalışıyor -> ${link.describe()}`);
-  log(`Önizleme: http://127.0.0.1:${cfg.port}/`);
+  log(`Clawd Desk companion running -> ${link.describe()}`);
+  log(`Preview: http://127.0.0.1:${cfg.port}/`);
   await tick();
   setInterval(tick, cfg.interval * 1000);
 }
 
 async function cmdDemo(cfg) {
   const link = new DeviceLink({ device: cfg.device, serial: cfg.serial, log });
-  log(`Demo -> ${link.describe()} (Ctrl+C ile çık)`);
+  log(`Demo -> ${link.describe()} (Ctrl+C to stop)`);
   for (let i = 0; ; i = (i + 1) % DEMO_STEPS.length) {
     const step = DEMO_STEPS[i];
-    log(`senaryo: ${step.label}`);
+    log(`scenario: ${step.label()}`);
     const s = step.make();
     const until = Date.now() + step.seconds * 1000;
     while (Date.now() < until) {
@@ -220,19 +229,32 @@ async function cmdPrint() {
 function help() {
   console.log(`Clawd Desk companion
 
-  node src/cli.mjs run      [--device <ip|host>] [--serial COM5] [--port 8787]
-  node src/cli.mjs demo     [--device <ip|host>] [--serial COM5]
-  node src/cli.mjs print
-  node src/cli.mjs install          Claude Code hook'ları + status line
-  node src/cli.mjs uninstall        ikisini de geri alır
-  node src/cli.mjs autostart [off]  Windows açılışında arka planda başlat
+  node src/cli.mjs config --device <ip|host> [--lang en|tr] [--serial COM5]
+                                    save your settings once
+  node src/cli.mjs run              send live data to the screen
+  node src/cli.mjs demo             cycle through every screen with fake data
+  node src/cli.mjs print            print the screen data once (no device needed)
+  node src/cli.mjs install          add Claude Code hooks + status line
+  node src/cli.mjs uninstall        remove both again
+  node src/cli.mjs autostart [off]  start hidden at Windows login
+
+Any command also takes --device, --serial, --lang and --port.
 
 Config file: ${CONFIG_FILE}`);
 }
 
 const args = parseArgs(process.argv.slice(2));
 const cfg = loadConfig(args);
+setLang(cfg.lang);
 switch (args._[0]) {
+  case 'config': {
+    const next = { ...readConfigFile() };
+    for (const k of ['device', 'serial', 'lang', 'port']) if (args[k] !== undefined) next[k] = args[k];
+    fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
+    fs.writeFileSync(CONFIG_FILE, `${JSON.stringify(next, null, 2)}\n`);
+    console.log(`Saved ${CONFIG_FILE}:\n${JSON.stringify(next, null, 2)}`);
+    break;
+  }
   case 'run': await cmdRun(cfg); break;
   case 'demo': await cmdDemo(cfg); break;
   case 'print': await cmdPrint(); break;
@@ -242,31 +264,32 @@ switch (args._[0]) {
     const which = args._[0];
     if (which !== 'install-statusline') {
       const r = installHooks();
-      console.log(`Hook'lar eklendi (${r.events.join(', ')}) -> ${r.path}`);
+      console.log(`Hooks added (${r.events.join(', ')}) -> ${r.path}`);
     }
     if (which !== 'install-hooks') {
       const r = installStatusline();
-      console.log(`Status line eklendi${r.chained ? ' (eski status line korunuyor)' : ''} -> ${r.path}`);
+      console.log(`Status line added${r.chained ? ' (your previous status line still runs)' : ''} -> ${r.path}`);
     }
-    console.log(`Önceki ayarların yedeği: ${path.join(os.homedir(), '.claude', 'settings.json')}.clawd-desk.bak`);
+    console.log(`Backup of your previous settings: ${r0()}.clawd-desk.bak`);
     break;
   }
   case 'autostart': {
     if (args._[1] === 'off') {
-      console.log(disableAutostart() ? 'Otomatik başlatma kapatıldı.' : 'Otomatik başlatma zaten kapalıydı.');
+      console.log(disableAutostart() ? 'Autostart turned off.' : 'Autostart was already off.');
     } else {
       const extra = [];
       if (args.device) extra.push('--device', args.device);
       if (args.serial) extra.push('--serial', args.serial);
+      if (args.lang) extra.push('--lang', args.lang);
       const p = enableAutostart(extra);
-      console.log(`Windows açılışında başlayacak: ${p}\nKayıt dosyası: ${logPath()}`);
+      console.log(`Will start at Windows login: ${p}\nLog file: ${logPath()}`);
     }
     break;
   }
   case 'uninstall': {
     uninstallHooks();
     const r = uninstallStatusline();
-    console.log(`Clawd Desk hook'ları ve status line kaldırıldı: ${r.path}`);
+    console.log(`Clawd Desk hooks and status line removed: ${r.path}`);
     break;
   }
   default: help();

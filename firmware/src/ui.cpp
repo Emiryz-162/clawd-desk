@@ -4,6 +4,7 @@
 #include "config.h"
 #include "data.h"
 #include "gfx.h"
+#include "lang.h"
 
 using namespace gfx;
 
@@ -52,16 +53,16 @@ static void drawHome() {
   JsonObjectConst home = g_state["home"];
   clawdDraw(18, 46, 108, C->mood, C->frame, C_CLAY, C_BG);
 
-  textFit(144, 100, jstr(home["title"], "Boşta"), F_XXL, C_TEXT, 162);
+  textFit(144, 100, jstr(home["title"], L().idle), F_XXL, C_TEXT, 162);
   textFit(144, 119, jstr(home["project"]), F_MONO, C_CLAY_LT, 162);
   textFit(144, 136, jstr(home["sub"]), F_BODY, C_MUTED, 162);
 
   int y = 186;
   for (JsonObjectConst l : g_state["limits"].as<JsonArrayConst>()) {
     char label[24];
-    snprintf(label, sizeof(label), "%s 5s", jstr(l["short"], jstr(l["name"])));
+    snprintf(label, sizeof(label), "%s %s", jstr(l["short"], jstr(l["name"])), L().fiveShort);
     char pct[8];
-    snprintf(pct, sizeof(pct), "%%%d", l["p5"].as<int>());
+    fmtPct(pct, sizeof(pct), l["p5"].as<int>());
     textFit(14, y + 9, label, F_SMALL, C_MUTED, 72);
     bar(92, y + 3, 172, 7, l["p5"].as<int>(), jcolor(l["color"], C_CLAY), C_TRACK);
     textR(306, y + 10, pct, F_BODY_B, C_TEXT);
@@ -73,7 +74,7 @@ static void drawHome() {
 
 // --------------------------------------------------------------- LIMITS
 static void drawLimits() {
-  topBar("LİMİTLER", C_MUTED);
+  topBar(L().limits, C_MUTED);
   int cx = 12;
   for (JsonObjectConst l : g_state["limits"].as<JsonArrayConst>()) {
     const int cw = 144, cy = 30;
@@ -85,15 +86,15 @@ static void drawLimits() {
     const int p5 = l["p5"].as<int>();
     ring(cx + 40, cy + 66, 30, 23, p5, col, C_TRACK, C_PANEL);
     char pct[8];
-    snprintf(pct, sizeof(pct), "%%%d", p5);
+    fmtPct(pct, sizeof(pct), p5);
     textC(cx + 40, cy + 71, pct, F_MED, C_TEXT);
 
-    text(cx + 78, cy + 58, "5 SAAT", F_LABEL, C_MUTED);
+    text(cx + 78, cy + 58, L().fiveHours, F_LABEL, C_MUTED);
     textFit(cx + 78, cy + 75, jstr(l["r5"], "-"), F_BODY_B, C_TEXT, cw - 82);
 
     const int pw = l["pw"].as<int>();
-    snprintf(pct, sizeof(pct), "%%%d", pw);
-    text(cx + 10, cy + 124, "HAFTALIK", F_LABEL, C_MUTED);
+    fmtPct(pct, sizeof(pct), pw);
+    text(cx + 10, cy + 124, L().weekly, F_LABEL, C_MUTED);
     textR(cx + cw - 10, cy + 124, pct, F_LABEL, C_TEXT);
     bar(cx + 10, cy + 130, cw - 20, 6, pw, col, C_TRACK);
     textFit(cx + 10, cy + 154, jstr(l["rw"]), F_SMALL, C_MUTED, cw - 20);
@@ -120,7 +121,7 @@ static void drawLive() {
   textFit(22 + tw + 7, 63, jstr(live["target"]), F_MONO, C_TEXT, 292 - tw - 22);
   textFit(22, 83, jstr(live["desc"]), F_BODY, C_MUTED, 276);
 
-  text(14, 108, "SON ADIMLAR", F_LABEL, C_MUTED);
+  text(14, 108, L().lastSteps, F_LABEL, C_MUTED);
   int y = 123;
   for (JsonObjectConst s : live["steps"].as<JsonArrayConst>()) {
     const char* st = jstr(s["tag"]);
@@ -136,7 +137,7 @@ static void drawLive() {
   const int done = live["todo_done"] | 0, total = live["todo_total"] | 0;
   if (total > 0) {
     char t[24];
-    snprintf(t, sizeof(t), "Görevler %d/%d", done, total);
+    snprintf(t, sizeof(t), L().tasksFmt, done, total);
     text(14, 214, t, F_SMALL, C_MUTED);
     bar(100, 208, 206, 6, done * 100 / total, C_CLAY, C_TRACK);
   }
@@ -146,13 +147,13 @@ static void drawLive() {
 // ------------------------------------------------------------ ATTENTION
 static void drawAttention() {
   JsonObjectConst a = g_state["attention"];
-  topBar("DİKKAT", C_BG);
+  topBar(L().attention, C_BG);
   clawdDraw(14, 66, 92, MOOD_WAITING, C->frame, C_BG, C_CLAY);
 
   int y = 62;
-  text(118, y, "ONAY BEKLİYOR", F_LABEL, C_BG);
+  text(118, y, L().needsApproval, F_LABEL, C_BG);
   y += 20;
-  const int lines = textWrap(118, y, jstr(a["title"], "Bir izin bekleniyor"), F_LARGE, C_BG, 188, 18, 3);
+  const int lines = textWrap(118, y, jstr(a["title"], L().approvalDefault), F_LARGE, C_BG, 188, 18, 3);
   y += (lines - 1) * 18 + 10;
   const char* cmd = jstr(a["cmd"]);
   if (*cmd) {
@@ -163,18 +164,18 @@ static void drawAttention() {
   textFit(118, y + 8, jstr(a["meta"]), F_SMALL, C_BG, 188);
 
   hline(14, 210, 292, C_CLAY_DK);
-  text(14, 226, "Bilgisayardan onayla · ortaya dokun: detay", F_LABEL, C_BG);
+  textFit(14, 226, L().approvalHint, F_LABEL, C_BG, 292);
 }
 
 // ------------------------------------------------------------- SESSIONS
 static void drawSessions() {
   const int n = uiSessionCount();
   char right[16];
-  snprintf(right, sizeof(right), "%d iş", n);
-  text(14, 21, "OTURUMLAR", F_LABEL, C_MUTED);
+  snprintf(right, sizeof(right), L().jobsFmt, n);
+  text(14, 21, L().sessions, F_LABEL, C_MUTED);
   textR(306, 21, right, F_LABEL, C_MUTED);
   if (n == 0) {
-    textC(160, 120, "Henüz oturum yok", F_BODY, C_MUTED);
+    textC(160, 120, L().noSessions, F_BODY, C_MUTED);
     return;
   }
   // Show 4 rows, scrolled so the selection is visible.
@@ -203,7 +204,7 @@ static void drawDetail() {
   if (n == 0) { drawSessions(); return; }
   JsonObjectConst s = g_state["sessions"][C->sel % n];
   char hdr[24];
-  snprintf(hdr, sizeof(hdr), "OTURUM %d/%d", C->sel % n + 1, n);
+  snprintf(hdr, sizeof(hdr), L().sessionFmt, C->sel % n + 1, n);
   topBar(hdr, C_MUTED);
 
   const char* tool = jstr(s["tool"]);
@@ -218,7 +219,7 @@ static void drawDetail() {
   text(19 + nameW + 8, 44, label, F_LABEL, C_BG);
   textR(306, 43, tool, F_SMALL, C_MUTED);
 
-  text(14, 63, "İSTEK", F_LABEL, C_MUTED);
+  text(14, 63, L().request, F_LABEL, C_MUTED);
   textWrap(14, 78, jstr(s["prompt"], "-"), F_BODY, C_TEXT, 292, 14, 2);
 
   int x = 14;
@@ -230,7 +231,7 @@ static void drawDetail() {
     if (x > 250) break;
   }
 
-  text(14, 154, "SON MESAJ", F_LABEL, C_MUTED);
+  text(14, 154, L().lastMessage, F_LABEL, C_MUTED);
   textWrap(14, 169, jstr(s["last"], "-"), F_BODY, C_SOFT, 292, 14, 4);
 }
 
@@ -238,7 +239,7 @@ static void drawDetail() {
 static void drawDone() {
   JsonObjectConst d = g_state["done"];
   clawdDraw(104, 22, 112, MOOD_HAPPY, C->frame, C_CLAY, C_BG);
-  textC(160, 160, "Bitti!", F_XXL, C_GREEN);
+  textC(160, 160, L().done, F_XXL, C_GREEN);
   char line[96];
   const char* meta = jstr(d["meta"]);
   snprintf(line, sizeof(line), "%s%s%s", jstr(d["project"]), *meta ? " · " : "", meta);
@@ -251,8 +252,10 @@ static void drawNight() {
   char line[64] = "";
   int n = 0;
   for (JsonObjectConst l : g_state["limits"].as<JsonArrayConst>()) {
-    n += snprintf(line + n, sizeof(line) - n, "%s%s %%%d", n ? " · " : "",
-                  jstr(l["short"], jstr(l["name"])), l["p5"].as<int>());
+    char pct[8];
+    fmtPct(pct, sizeof(pct), l["p5"].as<int>());
+    n += snprintf(line + n, sizeof(line) - n, "%s%s %s", n ? " · " : "",
+                  jstr(l["short"], jstr(l["name"])), pct);
     if (n >= static_cast<int>(sizeof(line)) - 1) break;
   }
   const int tw = textW(line, F_MONO);

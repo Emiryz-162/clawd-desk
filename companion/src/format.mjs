@@ -1,43 +1,45 @@
-// Turkish, compact formatting for a 2.8" screen.
-
-export const DAYS = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+// Compact formatting for a 2.8" screen, in the language chosen in i18n.mjs.
+import { T } from './i18n.mjs';
 
 const pad = (n) => String(n).padStart(2, '0');
 
-/** 108 min -> "1sa 48dk" */
+/** 108 min -> "1h 48m" (en) / "1sa 48dk" (tr) */
 export function durShort(ms) {
+  const t = T();
   const m = Math.max(0, Math.round(ms / 60000));
-  if (m < 60) return `${m}dk`;
+  if (m < 60) return `${m}${t.min}`;
   const h = Math.floor(m / 60);
-  if (h < 24) return m % 60 ? `${h}sa ${m % 60}dk` : `${h}sa`;
-  return `${Math.floor(h / 24)}g ${h % 24}sa`;
+  if (h < 24) return m % 60 ? `${h}${t.hour} ${m % 60}${t.min}` : `${h}${t.hour}`;
+  return `${Math.floor(h / 24)}${t.day} ${h % 24}${t.hour}`;
 }
 
-/** time since -> "şimdi", "12 dk", "3 sa", "2 gün" */
+/** time since -> "now", "12 min", "3 h", "2 d" */
 export function ago(ts, now = Date.now()) {
+  const t = T();
   const s = (now - ts) / 1000;
-  if (s < 60) return 'şimdi';
-  if (s < 3600) return `${Math.floor(s / 60)} dk`;
-  if (s < 86400) return `${Math.floor(s / 3600)} sa`;
-  return `${Math.floor(s / 86400)} gün`;
+  if (s < 60) return t.now;
+  if (s < 3600) return t.agoMin(Math.floor(s / 60));
+  if (s < 86400) return t.agoHour(Math.floor(s / 3600));
+  return t.agoDay(Math.floor(s / 86400));
 }
 
-/** time since, very short -> "18s", "4dk", "2sa" */
+/** time since, very short -> "18s", "4m", "2h" */
 export function agoShort(ts, now = Date.now()) {
+  const t = T();
   const s = Math.max(0, (now - ts) / 1000);
   if (s < 60) return `${Math.floor(s)}s`;
-  if (s < 3600) return `${Math.floor(s / 60)}dk`;
-  return `${Math.floor(s / 3600)}sa`;
+  if (s < 3600) return `${Math.floor(s / 60)}${t.min}`;
+  return `${Math.floor(s / 3600)}${t.hour}`;
 }
 
 export function clock(d = new Date()) {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-/** -> "Pzt 09:00" */
+/** -> "Mon 09:00" */
 export function weekdayTime(ts) {
   const d = new Date(ts);
-  return `${DAYS[d.getDay()]} ${clock(d)}`;
+  return `${T().days[d.getDay()]} ${clock(d)}`;
 }
 
 /** -> "12:04" or "1:12:04" */

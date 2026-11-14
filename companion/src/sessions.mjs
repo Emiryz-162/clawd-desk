@@ -9,6 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { JsonlTail } from './jsonl.mjs';
 import { cleanText, clip } from './format.mjs';
+import { T } from './i18n.mjs';
 
 export const CLAUDE_DIR = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
 export const CODEX_DIR = process.env.CODEX_HOME || path.join(os.homedir(), '.codex');
@@ -41,7 +42,7 @@ export function describeTool(name, input, cwd) {
     case 'Grep': case 'Glob': return { tag: 'FIND', text: input.pattern || '' };
     case 'WebFetch': case 'WebSearch': return { tag: 'WEB', text: input.url || input.query || '' };
     case 'Agent': case 'Task': return { tag: 'AGENT', text: input.description || '' };
-    case 'TodoWrite': return { tag: 'TODO', text: 'görev listesi' };
+    case 'TodoWrite': return { tag: 'TODO', text: T().todoList };
     default: return { tag: String(name || '?').slice(0, 5).toUpperCase(), text: first(input.description || '') };
   }
 }

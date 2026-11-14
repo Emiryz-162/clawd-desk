@@ -39,7 +39,7 @@ export class DeviceLink {
       if (this.port) { try { this.port.close(); } catch { /* ignore */ } this.port = null; }
     }
     if (ok !== this.ok) {
-      this.log(ok ? `ekran bağlı: ${this.describe()}` : `ekrana ulaşılamadı (${this.describe()}): ${why}`);
+      this.log(ok ? `screen connected: ${this.describe()}` : `cannot reach the screen (${this.describe()}): ${why}`);
       this.ok = ok;
     }
     return ok;
@@ -51,7 +51,7 @@ export class DeviceLink {
     try {
       ({ SerialPort } = await import('serialport'));
     } catch {
-      throw new Error('USB için önce `npm install` çalıştır (serialport paketi)');
+      throw new Error('For USB, run `npm install` in companion/ first (serialport package)');
     }
     this.port = await new Promise((res, rej) => {
       const p = new SerialPort({ path: this.serial, baudRate: 115200, hupcl: false }, (e) => (e ? rej(e) : res(p)));

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { deviceSafe, durShort, elapsed } from '../src/format.mjs';
+import { setLang } from '../src/i18n.mjs';
 import { HookState } from '../src/hooks.mjs';
 import { StateBuilder, prettyModel } from '../src/state.mjs';
 
@@ -15,7 +16,11 @@ const fakeSession = (over = {}) => ({
 });
 
 test('formatting', () => {
+  setLang('en');
+  assert.equal(durShort(108 * 60e3), '1h 48m');
+  setLang('tr');
   assert.equal(durShort(108 * 60e3), '1sa 48dk');
+  setLang('en');
   assert.equal(elapsed(724e3), '12:04');
   assert.equal(deviceSafe('Bitti… 🎉 ğüşıöç'), 'Bitti...  ğüşıöç');
   assert.equal(prettyModel('claude-opus-5-5'), 'Opus 5.5');
@@ -25,7 +30,8 @@ test('working session fills home and live', () => {
   const st = new StateBuilder().build({ sessions: [fakeSession()], hooks: new HookState(), claudeUsage: { error: 'x' }, codexUsage: { error: 'x' } });
   assert.equal(st.mode, 'working');
   assert.equal(st.live.tag, 'EDIT');
-  assert.equal(st.sessions[0].status_label, 'Çalışıyor');
+  assert.equal(st.sessions[0].status_label, 'Working');
+  assert.equal(st.lang, 'en');
   assert.equal(st.limits[0].r5, '?');
 });
 

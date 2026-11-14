@@ -3,10 +3,11 @@
 import {
   ago, agoShort, clip, clock, deviceSafeDeep, durShort, elapsed, tokens, weekdayTime,
 } from './format.mjs';
+import { lang, T } from './i18n.mjs';
 import { describeTool } from './sessions.mjs';
 
 const H = 3600e3;
-const STATUS_LABEL = { working: 'Çalışıyor', waiting: 'Onay bekliyor', done: 'Bitti', idle: 'Durdu' };
+const pct = (n) => (lang() === 'tr' ? `%${n}` : `${n}%`);
 
 export function prettyModel(m) {
   if (!m) return '';
@@ -38,17 +39,18 @@ export class StateBuilder {
   }
 
   limit(name, short, color, u, now) {
-    if (!u || u.error) return { name, short, color, p5: 0, r5: '?', pw: 0, rw: 'veri yok' };
+    if (!u || u.error) return { name, short, color, p5: 0, r5: '?', pw: 0, rw: T().noData };
     return {
       name, short, color,
       p5: Math.max(0, Math.min(100, u.p5)),
       r5: u.r5ts ? durShort(u.r5ts - now) : '-',
       pw: Math.max(0, Math.min(100, u.pw)),
-      rw: u.rwts ? `${weekdayTime(u.rwts)} sıfırlanır` : '',
+      rw: u.rwts ? T().resets(weekdayTime(u.rwts)) : '',
     };
   }
 
   build({ sessions, hooks, claudeUsage, codexUsage, now = Date.now() }) {
+    const t = T();
     const list = sessions.slice(0, 6).map((s) => ({ s, status: this.statusOf(s, hooks, now) }));
 
     // "done" event when a session goes from working/waiting to done
@@ -59,7 +61,7 @@ export class StateBuilder {
         this.doneEvent = {
           id: ++this.doneCounter,
           project: s.name,
-          meta: [took, `${s.files.size} dosya`].filter(Boolean).join(' · '),
+          meta: [took, t.files(s.files.size)].filter(Boolean).join(' · '),
           ts: now,
         };
       }
@@ -74,31 +76,31 @@ export class StateBuilder {
     // ---- home
     let home;
     if (waiting) {
-      home = { title: 'Bekliyor', project: waiting.s.name, sub: 'onay gerekiyor' };
+      home = { title: t.homeWaiting, project: waiting.s.name, sub: t.needsApproval };
     } else if (working) {
       const s = working.s;
-      const parts = [durShort(now - (s.promptTs || s.firstTs)), `${s.toolCount} adım`];
-      if (s.todo?.total) parts.push(`${s.todo.done}/${s.todo.total} görev`);
-      home = { title: 'Çalışıyor', project: s.name, sub: parts.join(' · ') };
+      const parts = [durShort(now - (s.promptTs || s.firstTs)), t.steps(s.toolCount)];
+      if (s.todo?.total) parts.push(t.tasks(s.todo.done, s.todo.total));
+      home = { title: t.homeWorking, project: s.name, sub: parts.join(' · ') };
     } else if (doneActive) {
-      home = { title: 'Bitti', project: this.doneEvent.project, sub: this.doneEvent.meta };
+      home = { title: t.homeDone, project: this.doneEvent.project, sub: this.doneEvent.meta };
     } else if (list.length) {
       const s = list[0].s;
       const when = s.completedTs || s.mtime;
       const a = ago(when, now);
-      home = { title: 'Boşta', project: `son: ${s.name}`, sub: a === 'şimdi' ? 'az önce bitti' : `${a} önce` };
+      home = { title: t.homeIdle, project: t.last(s.name), sub: a === t.now ? t.justFinished : t.agoSuffix(a) };
     } else {
-      home = { title: 'Boşta', project: '', sub: 'Henüz oturum yok' };
+      home = { title: t.homeIdle, project: '', sub: t.noSessions };
     }
 
     // ---- live (the session that is working right now)
     let live = null;
     if (working) {
       const s = working.s;
-      const cur = s.recent[s.recent.length - 1] || { tag: '...', text: 'düşünüyor', ts: now };
+      const cur = s.recent[s.recent.length - 1] || { tag: '...', text: t.thinking, ts: now };
       const ctx = s.ctxWindow && s.source === 'codex'
-        ? `bağlam %${Math.round((s.ctx / s.ctxWindow) * 100)}`
-        : `bağlam ${tokens(s.ctx)}`;
+        ? `${t.context} ${pct(Math.round((s.ctx / s.ctxWindow) * 100))}`
+        : `${t.context} ${tokens(s.ctx)}`;
       live = {
         project: s.name,
         elapsed: elapsed(now - (s.promptTs || s.firstTs)),
@@ -122,19 +124,18 @@ export class StateBuilder {
       let cmd = '';
       let since = now;
       if (s.source === 'codex') {
-        title = 'Codex bir komut çalıştırmak istiyor';
+        title = t.codexAsks;
         cmd = s.pending?.cmd || '';
         since = s.pending?.ts || now;
       } else {
-        const tool = h?.toolName || 'bir araç';
-        title = `Claude ${tool} kullanmak istiyor`;
+        title = t.claudeAsks(h?.toolName || t.aTool);
         if (h?.toolName) {
           const d = describeTool(h.toolName, h.toolInput, s.cwd);
           cmd = d.tag === 'BASH' ? `$ ${d.text}` : d.text;
         }
         since = h?.ts || now;
       }
-      attention = { title, cmd: clip(cmd, 80), meta: `${s.name} · ${agoShort(since, now)} bekliyor` };
+      attention = { title, cmd: clip(cmd, 80), meta: `${s.name} · ${t.waitingFor(agoShort(since, now))}` };
     }
 
     // ---- session list + details
@@ -142,20 +143,21 @@ export class StateBuilder {
       name: s.name,
       tool: s.tool,
       status,
-      status_label: STATUS_LABEL[status],
+      status_label: t.status[status],
       ago: ago(s.mtime, now),
       prompt: clip(s.prompt || '-', 150),
       stats: [
-        [s.firstTs ? durShort(s.lastTs - s.firstTs) : '-', 'SÜRE'],
-        [String(s.toolCount), 'ADIM'],
-        [String(s.files.size), 'DOSYA'],
-        [tokens(s.ctx), 'TOKEN'],
+        [s.firstTs ? durShort(s.lastTs - s.firstTs) : '-', t.stats[0]],
+        [String(s.toolCount), t.stats[1]],
+        [String(s.files.size), t.stats[2]],
+        [tokens(s.ctx), t.stats[3]],
       ],
       last: clip(s.last || '-', 240),
     }));
 
     return deviceSafeDeep({
       v: 1,
+      lang: lang(),
       clock: clock(new Date(now)),
       mode,
       home,

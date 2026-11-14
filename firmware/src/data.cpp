@@ -9,42 +9,171 @@ bool g_haveLiveData = false;
 // Shown until the PC companion sends real data. Same sample as the design.
 static const char DEMO_JSON[] PROGMEM = R"JSON({
   "v": 1,
+  "lang": "en",
   "mode": "working",
-  "home": {"title": "Çalışıyor", "project": "desk-buddy", "sub": "12 dk · 47 adım · 3/5 görev"},
+  "home": {
+    "title": "Working",
+    "project": "desk-buddy",
+    "sub": "12m · 47 steps · 3/5 tasks"
+  },
   "limits": [
-    {"name": "Claude Code", "short": "Claude", "color": "#D97757", "p5": 62, "r5": "1sa 48dk", "pw": 41, "rw": "Pzt 09:00 sıfırlanır"},
-    {"name": "Codex", "short": "Codex", "color": "#7FA7D9", "p5": 18, "r5": "3sa 10dk", "pw": 33, "rw": "Çar 14:00 sıfırlanır"}
+    {
+      "name": "Claude Code",
+      "short": "Claude",
+      "color": "#D97757",
+      "p5": 62,
+      "r5": "1h 48m",
+      "pw": 41,
+      "rw": "resets Mon 09:00"
+    },
+    {
+      "name": "Codex",
+      "short": "Codex",
+      "color": "#7FA7D9",
+      "p5": 18,
+      "r5": "3h 10m",
+      "pw": 33,
+      "rw": "resets Wed 14:00"
+    }
   ],
   "live": {
-    "project": "desk-buddy", "elapsed": "12:04",
-    "meta": "Claude Code · Opus · bağlam %38",
-    "tag": "EDIT", "target": "src/ui/limits.cpp", "desc": "Halka grafiğin çizimini düzenliyor",
+    "project": "desk-buddy",
+    "elapsed": "12:04",
+    "meta": "Claude Code · Opus · context 84k",
+    "tag": "EDIT",
+    "target": "src/ui/limits.cpp",
+    "desc": "Polishing the ring chart",
     "steps": [
-      {"tag": "READ", "text": "src/ui/screens.cpp", "ago": "18s"},
-      {"tag": "BASH", "text": "pio run -e cyd", "ago": "41s"},
-      {"tag": "EDIT", "text": "src/net/usage.cpp", "ago": "1dk"}
+      {
+        "tag": "READ",
+        "text": "src/ui/screens.cpp",
+        "ago": "18s"
+      },
+      {
+        "tag": "BASH",
+        "text": "pio run -e cyd",
+        "ago": "41s"
+      },
+      {
+        "tag": "EDIT",
+        "text": "src/net/usage.cpp",
+        "ago": "1m"
+      }
     ],
-    "todo_done": 3, "todo_total": 5
+    "todo_done": 3,
+    "todo_total": 5
   },
   "attention": null,
   "done": null,
   "sessions": [
-    {"name": "desk-buddy", "tool": "Claude Code", "status": "working", "status_label": "Çalışıyor", "ago": "şimdi",
-     "prompt": "Limit ekranına halka grafik ekle, Codex verisini de göster",
-     "stats": [["12dk", "SÜRE"], ["47", "ADIM"], ["6", "DOSYA"], ["84k", "TOKEN"]],
-     "last": "Halka grafiği tek fonksiyona topladım. Şimdi PlatformIO ile derleyip boyutu kontrol ediyorum."},
-    {"name": "api-server", "tool": "Codex", "status": "waiting", "status_label": "Onay bekliyor", "ago": "2 dk",
-     "prompt": "Build hatasını düzelt ve testleri çalıştır",
-     "stats": [["8dk", "SÜRE"], ["21", "ADIM"], ["3", "DOSYA"], ["31k", "TOKEN"]],
-     "last": "Tip hatasını düzelttim. Doğrulamak için npm run build çalıştırmak istiyorum."},
-    {"name": "portfolio-site", "tool": "Claude Code", "status": "done", "status_label": "Bitti", "ago": "25 dk",
-     "prompt": "Proje kartlarını mobilde tek sütuna indir",
-     "stats": [["14dk", "SÜRE"], ["33", "ADIM"], ["4", "DOSYA"], ["52k", "TOKEN"]],
-     "last": "Kartlar 640px altında tek sütun. Ekran görüntüsüyle kontrol ettim."},
-    {"name": "blog-taslak", "tool": "Codex", "status": "idle", "status_label": "Durdu", "ago": "3 sa",
-     "prompt": "Taslak yazının yazım hatalarını düzelt",
-     "stats": [["4dk", "SÜRE"], ["9", "ADIM"], ["1", "DOSYA"], ["12k", "TOKEN"]],
-     "last": "Düzeltmeler hazır, onayını bekliyorum."}
+    {
+      "name": "desk-buddy",
+      "tool": "Claude Code",
+      "status": "working",
+      "status_label": "Working",
+      "ago": "now",
+      "prompt": "Add a ring chart to the limits screen and show Codex too",
+      "stats": [
+        [
+          "12m",
+          "TIME"
+        ],
+        [
+          "47",
+          "STEPS"
+        ],
+        [
+          "6",
+          "FILES"
+        ],
+        [
+          "84k",
+          "TOKENS"
+        ]
+      ],
+      "last": "Moved the ring drawing into one function. Building with PlatformIO now to check the size."
+    },
+    {
+      "name": "api-server",
+      "tool": "Codex",
+      "status": "waiting",
+      "status_label": "Needs approval",
+      "ago": "2 min",
+      "prompt": "Fix the build error and run the tests",
+      "stats": [
+        [
+          "8m",
+          "TIME"
+        ],
+        [
+          "21",
+          "STEPS"
+        ],
+        [
+          "3",
+          "FILES"
+        ],
+        [
+          "31k",
+          "TOKENS"
+        ]
+      ],
+      "last": "Fixed the type error. I want to run npm run build to confirm."
+    },
+    {
+      "name": "portfolio-site",
+      "tool": "Claude Code",
+      "status": "done",
+      "status_label": "Done",
+      "ago": "25 min",
+      "prompt": "Make the project cards a single column on mobile",
+      "stats": [
+        [
+          "14m",
+          "TIME"
+        ],
+        [
+          "33",
+          "STEPS"
+        ],
+        [
+          "4",
+          "FILES"
+        ],
+        [
+          "52k",
+          "TOKENS"
+        ]
+      ],
+      "last": "Cards are one column below 640px. Checked with a screenshot."
+    },
+    {
+      "name": "blog-draft",
+      "tool": "Codex",
+      "status": "idle",
+      "status_label": "Stopped",
+      "ago": "3 h",
+      "prompt": "Fix the typos in the draft post",
+      "stats": [
+        [
+          "4m",
+          "TIME"
+        ],
+        [
+          "9",
+          "STEPS"
+        ],
+        [
+          "1",
+          "FILES"
+        ],
+        [
+          "12k",
+          "TOKENS"
+        ]
+      ],
+      "last": "The fixes are ready, waiting for you."
+    }
   ]
 })JSON";
 

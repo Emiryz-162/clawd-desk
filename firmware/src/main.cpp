@@ -12,6 +12,7 @@
 #include "config.h"
 #include "data.h"
 #include "hw.h"
+#include "lang.h"
 #include "net.h"
 #include "ui.h"
 
@@ -194,7 +195,7 @@ static void fillCtx(uint32_t now) {
   if (!netClock(ui.clock, sizeof(ui.clock))) strlcpy(ui.clock, jstr(g_state["clock"], "--:--"), sizeof(ui.clock));
 
   if (!g_haveLiveData) snprintf(ui.status, sizeof(ui.status), "DEMO · %s", netIp().c_str());
-  else if (now - g_lastUpdateMs > STALE_MS) strlcpy(ui.status, "BAĞLANTI YOK", sizeof(ui.status));
+  else if (now - g_lastUpdateMs > STALE_MS) strlcpy(ui.status, L().noConnection, sizeof(ui.status));
   else strlcpy(ui.status, "CLAWD DESK", sizeof(ui.status));
 
   ui.mood = homeMood();
@@ -217,10 +218,11 @@ void setup() {
   uiBegin(tft);
   loadDemoState();
 
-  showMessage("Merhaba!", "Wi-Fi'ye bağlanıyorum...");
+  showMessage(L().hello, L().connecting);
   netBegin([] {
-    showMessage("Wi-Fi kurulumu",
-                "Telefonundan \"" CLAWD_AP_NAME "\" ağına bağlan ve açılan sayfadan evdeki Wi-Fi'yi seç.");
+    static char body[200];
+    snprintf(body, sizeof(body), L().wifiSetupBody, CLAWD_AP_NAME);
+    showMessage(L().wifiSetup, body);
   });
 
   buildRotation();
@@ -239,7 +241,7 @@ void loop() {
 
   const BootPress b = hwReadBoot();
   if (b == BOOT_LONG) {
-    showMessage("Wi-Fi sıfırlanıyor", "Cihaz yeniden başlayıp kurulum ağını açacak.");
+    showMessage(L().wifiReset, L().wifiResetBody);
     delay(1500);
     netResetWifi();
   } else if (b == BOOT_SHORT) {
