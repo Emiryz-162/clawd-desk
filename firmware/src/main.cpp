@@ -205,8 +205,8 @@ static void fillCtx(uint32_t now) {
 
 // ------------------------------------------------------------ setup/loop
 void setup() {
+  Serial.setRxBufferSize(16384);  // must come before begin()
   Serial.begin(115200);
-  Serial.setRxBufferSize(16384);
   tft.init();
   tft.setRotation(1);
 #ifdef CLAWD_INVERT

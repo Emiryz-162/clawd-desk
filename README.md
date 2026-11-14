@@ -38,14 +38,18 @@ Claude Code / Codex  ──►  companion (bilgisayarında, Node.js)  ──Wi-F
 
 [PlatformIO](https://platformio.org/) gerekiyor (VS Code eklentisi ya da `pio` komutu).
 
-```bash
+PowerShell'de (PlatformIO VS Code eklentisiyle kurulduysa `pio` PATH'te olmaz, tam yolu kullan):
+
+```powershell
 cd firmware
-pio run -e cyd -t upload
+& "$env:USERPROFILE\.platformio\penv\Scripts\pio.exe" run -e cyd -t upload
 ```
 
-Kartında hem micro USB hem USB-C varsa `-e cyd2usb` kullan. Renkler ters görünürse `config.h` ve `platformio.ini` içindeki `CLAWD_INVERT` ayarıyla oyna.
+- Ekran fotoğraf negatifi gibi görünüyorsa (beyaz arka plan, turuncu yerine mavi) `-e cyd_inv` kullan.
+- Kartında hem micro USB hem USB-C varsa `-e cyd2usb` kullan.
+- Yükleme `Connecting.....` aşamasında takılırsa arkadaki BOOT tuşunu basılı tut.
 
-İlk açılışta ekran **Wi-Fi kurulumu** der. Telefonundan `ClawdDesk-Kurulum` ağına bağlan ve açılan sayfadan evdeki Wi-Fi'yi seç. Bağlanana kadar ekran demo verisi gösterir, sol üstte `DEMO · <ip>` yazar.
+Kartta daha önce kaydedilmiş bir Wi-Fi varsa doğrudan ona bağlanır, kurulum ağı açılmaz. Başka ağa geçmek için BOOT tuşunu 5 saniye basılı tut. Kayıtlı Wi-Fi yoksa ilk açılışta ekran **Wi-Fi kurulumu** der. Telefonundan `ClawdDesk-Kurulum` ağına bağlan ve açılan sayfadan evdeki Wi-Fi'yi seç. Bağlanana kadar ekran demo verisi gösterir, sol üstte `DEMO · <ip>` yazar.
 
 ### 2. Bilgisayar tarafını çalıştır
 
