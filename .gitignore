@@ -1,0 +1,6 @@
+firmware/.pio/
+firmware/.vscode/
+node_modules/
+*.log
+.DS_Store
+Thumbs.db

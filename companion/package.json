@@ -1,0 +1,22 @@
+{
+  "name": "clawd-desk-companion",
+  "version": "0.1.0",
+  "description": "Reads your local Claude Code and Codex sessions and sends them to the Clawd Desk screen.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "clawd-desk": "src/cli.mjs"
+  },
+  "scripts": {
+    "start": "node src/cli.mjs run",
+    "demo": "node src/cli.mjs demo",
+    "print": "node src/cli.mjs print",
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "optionalDependencies": {
+    "serialport": "^12.0.0"
+  }
+}
