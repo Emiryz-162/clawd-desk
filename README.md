@@ -172,10 +172,10 @@ If you don't touch anything for 15 seconds, it goes back to Home.
 
 ### Language
 
-Screens are in English by default. Turkish is built in:
+The screen follows your computer's language automatically. English and Turkish are built in. Any other language falls back to English. To pick one yourself:
 
 ```bash
-node src/cli.mjs config --lang tr
+node src/cli.mjs config --lang en
 ```
 
 Adding another language takes two small files: `companion/src/i18n.mjs` and `firmware/src/lang.cpp`.

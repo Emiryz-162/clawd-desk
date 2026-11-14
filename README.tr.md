@@ -21,10 +21,10 @@ Masanda duran küçük bir Clawd. 10 dolarlık bir ESP32 dokunmatik ekranda **Cl
    - Renkler negatif gibi görünüyorsa `cyd_inv`
    - Kartta hem micro USB hem USB-C varsa `cyd2usb`
 2. **Wi-Fi'ye bağla:** Telefonundan `ClawdDesk-Setup` ağına bağlan ve açılan sayfadan evdeki Wi-Fi'yi seç.
-3. **Bilgisayar tarafını kur:** `companion` klasöründe sırayla şunları çalıştır. Türkçe ekran için `--lang tr` ekliyoruz:
+3. **Bilgisayar tarafını kur:** `companion` klasöründe sırayla şunları çalıştır. Ekranın dili bilgisayarının diline göre otomatik seçilir. Başka bir dil istersen sona `--lang en` ekleyebilirsin.
 
 ```bash
-node src/cli.mjs config --device clawd-desk.local --lang tr
+node src/cli.mjs config --device clawd-desk.local
 ```
 
 ```bash

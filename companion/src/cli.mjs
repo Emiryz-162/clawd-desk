@@ -16,7 +16,7 @@ import path from 'node:path';
 import { disableAutostart, enableAutostart, logPath } from './autostart.mjs';
 import { DEMO_STEPS } from './demo.mjs';
 import { DeviceLink } from './device.mjs';
-import { setLang } from './i18n.mjs';
+import { setLang, systemLang } from './i18n.mjs';
 import { clock } from './format.mjs';
 import {
   HookState, installHooks, installStatusline, uninstallHooks, uninstallStatusline,
@@ -51,7 +51,7 @@ function readConfigFile() {
 function loadConfig(args) {
   const file = readConfigFile();
   return {
-    lang: args.lang || process.env.CLAWD_DESK_LANG || file.lang || 'en',
+    lang: args.lang || process.env.CLAWD_DESK_LANG || file.lang || systemLang(),
     device: args.device || process.env.CLAWD_DESK_DEVICE || file.device || 'clawd-desk.local',
     serial: args.serial || process.env.CLAWD_DESK_SERIAL || file.serial || null,
     port: Number(args.port || process.env.CLAWD_DESK_PORT || file.port || 8787),

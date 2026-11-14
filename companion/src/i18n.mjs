@@ -1,5 +1,6 @@
-// Screen texts in English (default) and Turkish.
-// Pick with `--lang tr`, CLAWD_DESK_LANG=tr or "lang": "tr" in the config file.
+// Screen texts in English and Turkish.
+// By default the screen follows your computer's language (English if it's
+// one we don't have yet). Override with `config --lang en|tr`.
 // Adding a language: copy the `en` block, translate, and add the same
 // language to firmware/src/lang.cpp for the fixed labels on the device.
 
@@ -57,6 +58,12 @@ const STRINGS = {
 };
 
 let current = 'en';
+
+/** The computer's language if we have it, otherwise English. */
+export function systemLang() {
+  const sys = (Intl.DateTimeFormat().resolvedOptions().locale || process.env.LANG || 'en').slice(0, 2).toLowerCase();
+  return STRINGS[sys] ? sys : 'en';
+}
 
 export function setLang(lang) {
   current = STRINGS[lang] ? lang : 'en';
