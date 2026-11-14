@@ -1,33 +1,91 @@
 // Claude plan usage (5-hour and weekly windows).
 //
-// Claude Code keeps an OAuth token in ~/.claude/.credentials.json. The same
-// token can read your own usage from the endpoint Claude Code's /usage screen
-// uses. It is not a documented public API and may change; if it fails the
-// screen simply shows "?" for Claude.
+// Claude Code keeps its login in ~/.claude/.credentials.json. With it we can
+// read your own usage from the endpoint Claude Code's /usage screen uses.
+// When the short-lived access token expires (if you mostly use the desktop
+// app, Claude Code isn't there to renew it), we renew it the same way Claude
+// Code does and save it back in the same file, so Claude Code keeps working.
+// None of this is a documented public API; if it fails, the screen falls
+// back to status line data or shows "?".
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { CLAUDE_DIR } from './sessions.mjs';
 
 const USAGE_URL = 'https://api.anthropic.com/api/oauth/usage';
+const TOKEN_URLS = ['https://console.anthropic.com/v1/oauth/token', 'https://platform.claude.com/v1/oauth/token'];
+const CLIENT_ID = '9d1c250a-e61b-44d9-88ed-5944d1962f5e'; // Claude Code's public OAuth client
+const credPath = () => path.join(CLAUDE_DIR, '.credentials.json');
 
-function readToken() {
+function readCreds() {
   try {
-    const raw = fs.readFileSync(path.join(CLAUDE_DIR, '.credentials.json'), 'utf8');
-    const o = JSON.parse(raw).claudeAiOauth;
-    if (!o?.accessToken) return { error: 'no token' };
-    if (o.expiresAt && o.expiresAt < Date.now()) return { error: 'token expired (open Claude Code once)' };
-    return { token: o.accessToken };
+    const all = JSON.parse(fs.readFileSync(credPath(), 'utf8'));
+    return all.claudeAiOauth ? all : null;
   } catch {
-    return { error: 'no credentials file' };
+    return null;
   }
 }
 
+// Write next to the file, then rename, so a crash never leaves it half written.
+function writeCreds(all) {
+  const p = credPath();
+  const tmp = `${p}.clawd-desk.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(all), { mode: 0o600 });
+  fs.renameSync(tmp, p);
+}
+
+let refreshing = null;
+
+async function renew(all) {
+  const o = all.claudeAiOauth;
+  if (!o.refreshToken) return { error: 'no refresh token (sign in to Claude Code once)' };
+  if (o.refreshTokenExpiresAt && o.refreshTokenExpiresAt < Date.now()) {
+    return { error: 'login expired (sign in to Claude Code once)' };
+  }
+  let lastError = '';
+  for (const url of TOKEN_URLS) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'clawd-desk' },
+        body: JSON.stringify({ grant_type: 'refresh_token', refresh_token: o.refreshToken, client_id: CLIENT_ID }),
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!res.ok) { lastError = `renew HTTP ${res.status}`; continue; }
+      const j = await res.json();
+      if (!j.access_token) { lastError = 'renew: no token in reply'; continue; }
+      // Claude Code may have renewed it meanwhile: only write if the file is unchanged
+      const now = readCreds();
+      if (now?.claudeAiOauth?.refreshToken !== o.refreshToken) return { token: now.claudeAiOauth.accessToken };
+      now.claudeAiOauth = {
+        ...now.claudeAiOauth,
+        accessToken: j.access_token,
+        refreshToken: j.refresh_token || o.refreshToken,
+        expiresAt: Date.now() + (j.expires_in || 3600) * 1000,
+      };
+      writeCreds(now);
+      return { token: j.access_token, renewed: true };
+    } catch (e) {
+      lastError = e.name === 'TimeoutError' ? 'renew timeout' : e.message;
+    }
+  }
+  return { error: lastError };
+}
+
+async function getToken() {
+  const all = readCreds();
+  if (!all) return { error: 'no Claude Code login on this computer' };
+  const o = all.claudeAiOauth;
+  if (o.accessToken && (!o.expiresAt || o.expiresAt - 5 * 60e3 > Date.now())) return { token: o.accessToken };
+  refreshing ??= renew(all).finally(() => { refreshing = null; });
+  return refreshing;
+}
+
 /**
- * @returns {Promise<{p5:number, r5ts:number, pw:number, rwts:number} | {error:string}>}
+ * @returns {Promise<{p5:number, r5ts:number, pw:number, rwts:number, renewed?:boolean} | {error:string}>}
  */
 export async function fetchClaudeUsage() {
-  const { token, error } = readToken();
+  const { token, error, renewed } = await getToken();
   if (!token) return { error };
   try {
     const res = await fetch(USAGE_URL, {
@@ -48,6 +106,7 @@ export async function fetchClaudeUsage() {
       r5ts: Date.parse(five.resets_at ?? '') || 0,
       pw: Math.round(week.utilization ?? 0),
       rwts: Date.parse(week.resets_at ?? '') || 0,
+      renewed,
     };
   } catch (e) {
     return { error: e.name === 'TimeoutError' ? 'timeout' : e.message };

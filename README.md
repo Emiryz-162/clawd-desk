@@ -189,9 +189,11 @@ Adding another language takes two small files: `companion/src/i18n.mjs` and `fir
 | Claude Code sessions | `~/.claude/projects/**/*.jsonl` (read only) |
 | Codex sessions and limits | `~/.codex/sessions/**/rollout-*.jsonl` (read only) |
 | Live status: working, needs approval, done | Claude Code hooks, sent to `127.0.0.1:8787` |
-| Claude 5-hour and weekly limits | The `rate_limits` field Claude Code passes to its status line (Pro and Max plans). If that's missing, the companion asks Claude Code's usage endpoint with your saved login. |
+| Claude 5-hour and weekly limits | Every 3 minutes, the companion asks the same usage endpoint Claude Code's `/usage` screen uses, with the login Claude Code saved on your computer. If that fails, it uses the `rate_limits` that Claude Code passes to its status line. |
 
-The companion only listens on `127.0.0.1`. Its only network traffic is to your screen, plus that fallback limits request.
+**About your Claude login:** Claude Code's access token only lasts a few hours, and if you mostly use the desktop app, nothing renews it. So when it expires, the companion renews it the same way Claude Code does and saves it back to `~/.claude/.credentials.json`, keeping everything else in that file as it was. Your login is never sent anywhere except to Anthropic.
+
+The companion only listens on `127.0.0.1`. Apart from your screen, it only talks to Anthropic, for the usage request and the login renewal.
 
 To undo the Claude Code changes at any time:
 
@@ -224,9 +226,9 @@ Your computer and the board must be on the same Wi-Fi network. Guest networks of
 <details>
 <summary><b>Claude limits show "?"</b></summary>
 
-Claude Code sends its limits to the status line only after it has answered at least once, and only on Pro and Max plans. In our testing, **the Claude desktop app didn't run the status line**. If you mostly use the desktop app, run `claude` in a terminal once and send any message. The limits stay valid for 12 hours.
+The companion needs Claude Code to be signed in on this computer. Run `claude` in a terminal once and sign in. After that it renews the login by itself. The companion log (`~/.clawd-desk/companion.log` with autostart, otherwise the terminal) says why the request failed.
 
-Open <http://127.0.0.1:8787/> and check `claude_usage_from_status_line`.
+Limits only exist on Pro, Max and similar plans. With an API key there's nothing to show.
 </details>
 
 <details>

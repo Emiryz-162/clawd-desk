@@ -75,18 +75,23 @@ function createEngine() {
     hooks,
     async compute() {
       const sessions = store.refresh();
-      // 1) status line data written by Claude Code itself (preferred)
-      let claudeUsage = readStatuslineUsage();
-      let source = 'status line';
-      // 2) otherwise ask the usage endpoint with Claude Code's saved login
+      // 1) ask the usage endpoint with Claude Code's login, every 3 minutes
+      //    (the login is renewed automatically when it expires)
+      if (Date.now() - lastApiFetch > 180e3) {
+        lastApiFetch = Date.now();
+        const u = await fetchClaudeUsage();
+        if (u.renewed) log('Claude login renewed');
+        if (u.error) log(`Claude usage request failed: ${u.error}`);
+        // keep the last good value through a short outage (up to 30 min)
+        if (!u.error) apiUsage = { ...u, ts: Date.now() };
+        else if (apiUsage.error || Date.now() - apiUsage.ts > 30 * 60e3) apiUsage = u;
+      }
+      let claudeUsage = apiUsage;
+      let source = 'usage endpoint';
+      // 2) otherwise use what the status line saved
       if (claudeUsage.error) {
-        if (Date.now() - lastApiFetch > 180e3) {
-          lastApiFetch = Date.now();
-          const u = await fetchClaudeUsage();
-          if (!u.error || apiUsage.error) apiUsage = u;
-        }
-        claudeUsage = apiUsage;
-        source = apiUsage.error ? `none (${apiUsage.error})` : 'oauth';
+        claudeUsage = readStatuslineUsage();
+        source = claudeUsage.error ? `none (${apiUsage.error})` : 'status line';
       }
       if (source !== lastSource) {
         log(`Claude limits source: ${source}`);

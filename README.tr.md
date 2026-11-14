@@ -47,6 +47,10 @@ Claude Code ayarlarına yaptığı değişiklikleri geri almak için:
 node src/cli.mjs uninstall
 ```
 
+## Claude limitleri
+
+Companion, Claude limitlerini 3 dakikada bir Claude Code'un bilgisayarındaki girişiyle sorar. Girişin süresi dolunca onu Claude Code'un yaptığı gibi kendisi yeniler. Bunun için Claude Code'da bir kez giriş yapmış olman yeterli.
+
 ## Lisans
 
 [MIT](LICENSE)
