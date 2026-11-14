@@ -65,6 +65,7 @@ node src/cli.mjs run --device clawd-desk.local
 - `clawd-desk.local` bulunamazsa ekranın sol üstündeki IP'yi kullan: `--device 192.168.1.42`
 - USB kablosuyla göndermek için önce `npm install` çalıştır, sonra `--serial COM5` kullan.
 - `http://127.0.0.1:8787/` adresinde ekrana giden veriyi canlı görebilirsin.
+- Windows açılışında pencere açmadan kendiliğinden başlasın: `node src/cli.mjs autostart`. Kapatmak için: `node src/cli.mjs autostart off`. Kayıtlar `~/.clawd-desk/companion.log` dosyasında.
 - Ayarları her seferinde yazmak istemezsen `~/.clawd-desk/config.json` dosyası oluştur: `{ "device": "192.168.1.42" }`
 
 Gerçek veri olmadan bütün ekranları gezmek için: `node src/cli.mjs demo --device clawd-desk.local`

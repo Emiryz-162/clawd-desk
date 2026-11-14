@@ -12,6 +12,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
+import { disableAutostart, enableAutostart, logPath } from './autostart.mjs';
 import { DEMO_STEPS } from './demo.mjs';
 import { DeviceLink } from './device.mjs';
 import { clock } from './format.mjs';
@@ -224,6 +225,7 @@ function help() {
   node src/cli.mjs print
   node src/cli.mjs install          Claude Code hook'ları + status line
   node src/cli.mjs uninstall        ikisini de geri alır
+  node src/cli.mjs autostart [off]  Windows açılışında arka planda başlat
 
 Config file: ${CONFIG_FILE}`);
 }
@@ -247,6 +249,18 @@ switch (args._[0]) {
       console.log(`Status line eklendi${r.chained ? ' (eski status line korunuyor)' : ''} -> ${r.path}`);
     }
     console.log(`Önceki ayarların yedeği: ${path.join(os.homedir(), '.claude', 'settings.json')}.clawd-desk.bak`);
+    break;
+  }
+  case 'autostart': {
+    if (args._[1] === 'off') {
+      console.log(disableAutostart() ? 'Otomatik başlatma kapatıldı.' : 'Otomatik başlatma zaten kapalıydı.');
+    } else {
+      const extra = [];
+      if (args.device) extra.push('--device', args.device);
+      if (args.serial) extra.push('--serial', args.serial);
+      const p = enableAutostart(extra);
+      console.log(`Windows açılışında başlayacak: ${p}\nKayıt dosyası: ${logPath()}`);
+    }
     break;
   }
   case 'uninstall': {
