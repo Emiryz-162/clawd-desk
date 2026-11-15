@@ -7,7 +7,7 @@ import { StateBuilder, prettyModel } from '../src/state.mjs';
 
 const fakeSession = (over = {}) => ({
   id: 's1', source: 'claude', name: 'desk-buddy', tool: 'Claude Code', cwd: '/x/desk-buddy',
-  mtime: Date.now(), firstTs: Date.now() - 600e3, lastTs: Date.now(), promptTs: Date.now() - 300e3,
+  mtime: Date.now(), activity: Date.now(), firstTs: Date.now() - 600e3, lastTs: Date.now(), promptTs: Date.now() - 300e3,
   prompt: 'Limit ekranına halka grafik ekle', last: 'Tamam.', model: 'claude-opus-5-5',
   toolCount: 12, files: new Set(['a.cpp']), ctx: 84000, ctxWindow: 200000,
   recent: [{ tag: 'EDIT', text: 'src/a.cpp', ts: Date.now() }], todo: { done: 1, total: 3 },

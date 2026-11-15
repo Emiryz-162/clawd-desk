@@ -28,12 +28,12 @@ export class StateBuilder {
     if (h && now - h.ts < 2 * H) {
       if (h.status === 'waiting') return 'waiting';
       // guard against a missed Stop event
-      if (h.status === 'working') return now - Math.max(h.ts, s.mtime) < 15 * 60e3 ? 'working' : 'idle';
+      if (h.status === 'working') return now - Math.max(h.ts, s.activity) < 15 * 60e3 ? 'working' : 'idle';
       if (h.status === 'done') return now - h.ts < 3 * H ? 'done' : 'idle';
       if (h.status === 'idle') return 'idle';
     }
     if (s.pending) return 'waiting';
-    if (s.turnOpen && now - s.mtime < (s.source === 'codex' ? 5 : 3) * 60e3) return 'working';
+    if (s.turnOpen && now - s.activity < (s.source === 'codex' ? 10 : 3) * 60e3) return 'working';
     if (s.completedTs && now - s.completedTs < 3 * H) return 'done';
     return 'idle';
   }
@@ -81,12 +81,14 @@ export class StateBuilder {
       const s = working.s;
       const parts = [durShort(now - (s.promptTs || s.firstTs)), t.steps(s.toolCount)];
       if (s.todo?.total) parts.push(t.tasks(s.todo.done, s.todo.total));
+      const others = list.filter((x) => x.status === 'working').length - 1;
+      if (others > 0) parts.unshift(t.more(others));
       home = { title: t.homeWorking, project: s.name, sub: parts.join(' · ') };
     } else if (doneActive) {
       home = { title: t.homeDone, project: this.doneEvent.project, sub: this.doneEvent.meta };
     } else if (list.length) {
       const s = list[0].s;
-      const when = s.completedTs || s.mtime;
+      const when = s.completedTs || s.activity;
       const a = ago(when, now);
       home = { title: t.homeIdle, project: t.last(s.name), sub: a === t.now ? t.justFinished : t.agoSuffix(a) };
     } else {
@@ -144,7 +146,7 @@ export class StateBuilder {
       tool: s.tool,
       status,
       status_label: t.status[status],
-      ago: ago(s.mtime, now),
+      ago: ago(s.activity, now),
       prompt: clip(s.prompt || '-', 150),
       stats: [
         [s.firstTs ? durShort(s.lastTs - s.firstTs) : '-', t.stats[0]],

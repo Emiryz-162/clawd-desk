@@ -29,6 +29,7 @@ const STRINGS = {
     noData: 'no data',
     resets: (when) => `resets ${when}`,
     todoList: 'todo list',
+    more: (n) => `+${n} more`,
   },
   tr: {
     days: ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'],
@@ -54,6 +55,7 @@ const STRINGS = {
     noData: 'veri yok',
     resets: (when) => `${when} sıfırlanır`,
     todoList: 'görev listesi',
+    more: (n) => `+${n} iş daha`,
   },
 };
 

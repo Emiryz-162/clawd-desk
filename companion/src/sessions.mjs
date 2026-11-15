@@ -14,6 +14,25 @@ import { T } from './i18n.mjs';
 export const CLAUDE_DIR = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
 export const CODEX_DIR = process.env.CODEX_HOME || path.join(os.homedir(), '.codex');
 
+// "C:/code/my-app/src" -> "my-app": the folder that holds .git, else the folder itself
+const nameCache = new Map();
+export function projectName(cwd) {
+  if (!cwd) return '';
+  if (nameCache.has(cwd)) return nameCache.get(cwd);
+  let dir = cwd;
+  let name = path.basename(cwd);
+  for (let i = 0; i < 8; i++) {
+    try {
+      if (fs.existsSync(path.join(dir, '.git'))) { name = path.basename(dir); break; }
+    } catch { /* unreadable */ }
+    const up = path.dirname(dir);
+    if (up === dir) break;
+    dir = up;
+  }
+  nameCache.set(cwd, name);
+  return name;
+}
+
 const ts = (v) => {
   if (typeof v === 'number') return v < 1e12 ? v * 1000 : v;
   const t = Date.parse(v ?? '');
@@ -70,10 +89,18 @@ class BaseSession {
     this.pending = null;            // {cmd, ts} approval needed (Codex)
     this.completedTs = 0;
     this.mtime = 0;
+    this.isSubagent = false;        // spawned by another session: shown through its parent
   }
 
   get name() {
-    return this.cwd ? path.basename(this.cwd) : this.id.slice(0, 12);
+    return this.cwd ? projectName(this.cwd) : this.id.slice(0, 12);
+  }
+
+  // Last sign of life. On Windows a log that stays open (Codex keeps it open)
+  // keeps its creation time as "modified", so the newest event's own
+  // timestamp counts too.
+  get activity() {
+    return Math.max(this.lastTs || 0, this.mtime || 0);
   }
 
   update() {
@@ -112,7 +139,7 @@ export class ClaudeSession extends BaseSession {
 
   feed(o, t) {
     if (o.isSidechain) return;
-    if (o.cwd && !this.cwd) this.cwd = o.cwd;
+    if (o.cwd) this.cwd = o.cwd;
 
     // written regularly, so it also covers huge logs we only read the end of
     if (o.type === 'last-prompt' && o.lastPrompt && !this.prompt) {
@@ -205,6 +232,7 @@ export class CodexSession extends BaseSession {
     const p = o.payload || {};
     if (o.type === 'session_meta') {
       this.cwd = p.cwd || this.cwd;
+      if (p.source && typeof p.source === 'object' && p.source.subagent) this.isSubagent = true;
       if (p.id) this.id = p.id;
       return;
     }
@@ -327,7 +355,7 @@ function walk(dir, depth, out) {
 }
 
 /** Newest session files of both tools, modified within maxAgeMs. */
-export function findSessionFiles(maxAgeMs = 3 * 86400000, limit = 8) {
+export function findSessionFiles(maxAgeMs = 3 * 86400000, limit = 14) {
   const now = Date.now();
   const files = [];
   const claude = [];
@@ -366,7 +394,9 @@ export class SessionStore {
     const list = [...this.byFile.values()];
     for (const s of list) s.update();
     // Codex sessions that never got a user prompt (e.g. empty) are noise
-    return list.filter((s) => s.prompt || s.toolCount).sort((a, b) => b.mtime - a.mtime);
+    return list
+      .filter((s) => !s.isSubagent && (s.prompt || s.toolCount))
+      .sort((a, b) => b.activity - a.activity);
   }
 
   /** Latest Codex rate-limit snapshot across all known Codex sessions. */
