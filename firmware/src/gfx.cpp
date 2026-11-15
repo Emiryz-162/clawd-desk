@@ -83,6 +83,7 @@ void text(int x, int y, const char* s, const uint8_t* font, uint16_t c) {
   if (!s || !*s) return;
   if (y + 12 < OY || y - 64 > OY + BAND_H) return;
   u8f.setFont(font);
+  u8f.setFontMode(1);  // setFont() switches back to a solid black background, so set it every time
   u8f.setForegroundColor(c);
   u8f.drawUTF8(x, y - OY, s);
 }
