@@ -64,8 +64,10 @@ BootPress hwReadBoot() {
   } else if (down && !bootLongFired && millis() - bootDownMs > 5000) {
     bootLongFired = true;
     r = BOOT_LONG;
-  } else if (!down && bootDown && !bootLongFired && millis() - bootDownMs > 30) {
-    r = BOOT_SHORT;
+  } else if (!down && bootDown && !bootLongFired) {
+    const uint32_t held = millis() - bootDownMs;
+    if (held >= 1500) r = BOOT_MEDIUM;
+    else if (held > 30) r = BOOT_SHORT;
   }
   bootDown = down;
   return r;

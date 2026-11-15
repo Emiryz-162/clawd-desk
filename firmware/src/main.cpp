@@ -8,6 +8,7 @@
 // Touch is split into three big vertical zones (left / middle / right),
 // and the BOOT button on the back works as a physical "next" button.
 #include <Arduino.h>
+#include <Preferences.h>
 #include <TFT_eSPI.h>
 #include "config.h"
 #include "data.h"
@@ -18,6 +19,8 @@
 
 static TFT_eSPI tft;
 static UiCtx ui;
+static Preferences prefs;
+static bool invertColors = false;
 
 static Screen rot[3];
 static int rotN = 0;
@@ -210,9 +213,16 @@ void setup() {
   Serial.begin(115200);
   tft.init();
   tft.setRotation(1);
+  // Some panels show colors inverted. Holding BOOT for 2 s flips this, and
+  // the choice is saved on the board (survives restarts and updates).
 #ifdef CLAWD_INVERT
-  tft.invertDisplay(true);
+  const bool defaultInvert = true;
+#else
+  const bool defaultInvert = false;
 #endif
+  prefs.begin("clawd", false);
+  invertColors = prefs.getBool("invert", defaultInvert);
+  tft.invertDisplay(invertColors);
   tft.fillScreen(C_BG);
   hwBegin();  // after tft.init(), so the backlight pin stays on PWM
   uiBegin(tft);
@@ -240,6 +250,11 @@ void loop() {
     showMessage(L().wifiReset, L().wifiResetBody);
     delay(1500);
     netResetWifi();
+  } else if (b == BOOT_MEDIUM) {
+    invertColors = !invertColors;
+    tft.invertDisplay(invertColors);
+    prefs.putBool("invert", invertColors);
+    Serial.printf("[clawd] colors %s\n", invertColors ? "inverted" : "normal");
   } else if (b == BOOT_SHORT) {
     handleBoot();
   }

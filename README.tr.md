@@ -14,7 +14,7 @@ Masanda duran küçük bir Clawd. 10 dolarlık bir ESP32 dokunmatik ekranda **Cl
 - **Olaylar öne çıkar:** Onay bekleyen bir komut varsa ekran o sayfada kalır ve LED sarı yanıp söner. İş bitince Clawd 6 saniye sevinir.
 - **Üç büyük dokunma bölgesi var:** sol, orta ve sağ.
 - **Gece modu:** Işık sensörü oda kararınca ekranı karartır.
-- **BOOT tuşu:** Arkadaki tuş "sonraki" tuşu olarak çalışır.
+- **BOOT tuşu:** Arkadaki tuşa kısa basınca sonraki ekrana geçer. 2 saniye basılı tutunca renkleri ters çevirir (renkler negatif gibi görünüyorsa). 5 saniye basılı tutunca Wi-Fi ayarını unutur.
 - **Dil:** Ekran, bilgisayarının diline göre Türkçe ya da İngilizce olur.
 
 ## Kurulum (yaklaşık 5 dakika)

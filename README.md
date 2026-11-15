@@ -56,7 +56,9 @@ Everything stays on your computer and your home network. The companion reads fil
 
 1. Plug the board into your computer with the USB cable.
 2. Open the **[Clawd Desk installer](https://emiryz-162.github.io/clawd-desk/)** in Chrome or Edge.
-3. Pick your board type and click **Install Clawd Desk**. Not sure which board you have? Start with the first one. If the colors look like a photo negative, install again with the second.
+3. Pick your board type and click **Install Clawd Desk**. Not sure which board you have? Pick the first one.
+
+Colors look like a photo negative (white background, blue Clawd)? **Hold the BOOT button on the back for 2 seconds** and let go. The board remembers it.
 
 If it doesn't connect, hold the **BOOT** button on the back of the board and try again.
 
@@ -107,7 +109,7 @@ Firmware ([PlatformIO](https://platformio.org/install/ide?install=vscode)): open
 | Your board | Environment |
 |---|---|
 | Most boards (one micro USB port) | `cyd` |
-| Colors look like a photo negative | `cyd_inv` |
+| Starts with inverted colors (you can also hold BOOT for 2 s) | `cyd_inv` |
 | Both micro USB and USB-C | `cyd2usb` |
 
 On Windows with the VS Code extension, `pio` isn't on your PATH: `& "$env:USERPROFILE\.platformio\penv\Scripts\pio.exe" run -e cyd -t upload`.
@@ -152,7 +154,7 @@ If you don't touch anything for 15 seconds, it goes back to Home.
 ### LED and buttons
 
 - **LED (on the back):** orange breathing = working, blinking yellow = needs approval, green = done.
-- **BOOT button:** press for "next". Hold for 5 seconds to forget the Wi-Fi.
+- **BOOT button:** press for "next". Hold for 2 seconds to flip the colors (for panels that show them inverted). Hold for 5 seconds to forget the Wi-Fi.
 
 ### Language
 
@@ -190,7 +192,7 @@ To undo the Claude Code changes at any time, run `uninstall` (see **Remove it** 
 <details>
 <summary><b>Colors look wrong (white background, blue Clawd)</b></summary>
 
-Open the installer again and pick **Inverted colors**.
+Hold the **BOOT** button on the back of the board for 2 seconds and let go. The colors flip and the board remembers it. Some of these panels also look inverted when viewed from a low angle, so check from the front.
 </details>
 
 <details>
