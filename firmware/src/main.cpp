@@ -2,7 +2,8 @@
 // ESP32-2432S028R ("Cheap Yellow Display").
 //
 // The screen mostly runs itself:
-//   * Home -> Limits -> Live rotate every ROTATE_MS
+//   * it stays on Home; or auto-rotates; or shows only Clawd's face
+//     (hold the screen to switch between these three modes)
 //   * "waiting for approval" and "done" events jump to the front
 //   * the light sensor switches to night mode
 // Touch is split into three big vertical zones (left / middle / right),
@@ -12,6 +13,7 @@
 #include <TFT_eSPI.h>
 #include "config.h"
 #include "data.h"
+#include "face.h"
 #include "hw.h"
 #include "lang.h"
 #include "net.h"
@@ -21,7 +23,9 @@ static TFT_eSPI tft;
 static UiCtx ui;
 static Preferences prefs;
 static bool invertColors = false;
-static bool autoRotate = AUTO_ROTATE_DEFAULT;
+enum DisplayMode : uint8_t { MODE_NORMAL, MODE_AUTO, MODE_FACE };
+static DisplayMode displayMode = (DisplayMode)DISPLAY_MODE_DEFAULT;
+static uint32_t happyUntil = 0;
 static uint32_t toastUntil = 0;
 
 static Screen rot[3];
@@ -55,6 +59,9 @@ static void go(Screen s) {
   lastRotate = millis();
 }
 
+// "Home" is the face in face mode.
+static void goHome() { go(displayMode == MODE_FACE ? SCR_FACE : SCR_HOME); }
+
 static Mood homeMood() {
   const char* m = mode();
   if (!strcmp(m, "working")) return MOOD_WORKING;
@@ -73,7 +80,7 @@ static void showMessage(const char* title, const char* body) {
 // ------------------------------------------------------------ state input
 static void onStateChanged() {
   buildRotation();
-  if (ui.screen == SCR_LIVE && rotIndex(SCR_LIVE) < 0) go(SCR_HOME);
+  if (ui.screen == SCR_LIVE && rotIndex(SCR_LIVE) < 0) goHome();
 
   // "done" event: fire once per id
   JsonVariantConst d = g_state["done"];
@@ -81,6 +88,7 @@ static void onStateChanged() {
     const int id = d["id"] | 0;
     if (id != lastDoneId) {
       lastDoneId = id;
+      happyUntil = millis() + DONE_SHOW_MS + HAPPY_FACE_MS;
       if (ui.screen != SCR_ATTENTION) {
         go(SCR_DONE);
         doneUntil = millis() + DONE_SHOW_MS;
@@ -117,7 +125,8 @@ static void handleTap(Zone z) {
     go(SCR_HOME);
     return;
   }
-  if (ui.screen == SCR_DONE) { go(SCR_HOME); return; }
+  if (ui.screen == SCR_DONE) { goHome(); return; }
+  if (ui.screen == SCR_FACE) { go(SCR_HOME); return; }  // peek at the info, back to the face later
 
   const int ri = rotIndex(ui.screen);
   if (ri >= 0) {
@@ -135,7 +144,7 @@ static void handleTap(Zone z) {
     case SCR_DETAIL:
       if (z == ZONE_LEFT) go(SCR_SESSIONS);
       else if (z == ZONE_RIGHT) ui.sel = (ui.sel + 1) % n;
-      else go(SCR_HOME);
+      else goHome();
       break;
     case SCR_ATTENTION:
       if (z == ZONE_MID) {
@@ -148,15 +157,15 @@ static void handleTap(Zone z) {
       }
       break;
     default:
-      go(SCR_HOME);
+      goHome();
   }
 }
 
 static void handleBoot() {
   lastTouch = millis();
   if (rotIndex(ui.screen) >= 0) handleTap(ZONE_RIGHT);
-  else if (ui.screen == SCR_NIGHT) handleTap(ZONE_MID);
-  else go(SCR_HOME);
+  else if (ui.screen == SCR_NIGHT || ui.screen == SCR_FACE) handleTap(ZONE_MID);
+  else goHome();
 }
 
 // ------------------------------------------------------------ night mode
@@ -204,8 +213,9 @@ static void fillCtx(uint32_t now) {
   else strlcpy(ui.status, "CLAWD DESK", sizeof(ui.status));
 
   ui.mood = homeMood();
-  ui.autoRotate = autoRotate;
-  ui.toast = now < toastUntil ? (autoRotate ? L().autoOn : L().autoOff) : nullptr;
+  ui.autoRotate = displayMode == MODE_AUTO;
+  const char* names[] = {L().modeNormal, L().modeAuto, L().modeFace};
+  ui.toast = now < toastUntil ? names[displayMode] : nullptr;
   const int ri = rotIndex(ui.screen);
   ui.dotCount = ri >= 0 ? rotN : 0;
   ui.dotActive = ri;
@@ -226,7 +236,7 @@ void setup() {
 #endif
   prefs.begin("clawd", false);
   invertColors = prefs.getBool("invert", defaultInvert);
-  autoRotate = prefs.getBool("autorotate", AUTO_ROTATE_DEFAULT);
+  displayMode = (DisplayMode)min<uint8_t>(prefs.getUChar("mode", DISPLAY_MODE_DEFAULT), MODE_FACE);
   tft.invertDisplay(invertColors);
   tft.fillScreen(C_BG);
   hwBegin();  // after tft.init(), so the backlight pin stays on PWM
@@ -237,7 +247,7 @@ void setup() {
   netBegin();
 
   buildRotation();
-  go(SCR_HOME);
+  goHome();
   Serial.printf("[clawd] ready, ip=%s\n", netIp().c_str());
 }
 
@@ -265,12 +275,14 @@ void loop() {
   }
   const TouchEvent te = hwReadTouch();
   if (te.zone != ZONE_NONE && te.hold) {
-    // hold anywhere: switch auto-rotation on/off (saved on the board)
-    autoRotate = !autoRotate;
-    prefs.putBool("autorotate", autoRotate);
+    // hold anywhere: next display mode (saved on the board)
+    displayMode = (DisplayMode)((displayMode + 1) % 3);
+    prefs.putUChar("mode", displayMode);
     toastUntil = now + 1800;
     lastTouch = now;
-    lastRotate = now;
+    if (displayMode == MODE_FACE) go(SCR_FACE);
+    else if (ui.screen == SCR_FACE) go(SCR_HOME);
+    else lastRotate = now;
   } else if (te.zone != ZONE_NONE) {
     handleTap(te.zone);
   }
@@ -281,14 +293,17 @@ void loop() {
   const bool attention = !g_state["attention"].isNull();
   const bool peeking = ui.screen == SCR_DETAIL && now - lastTouch < BACK_HOME_MS;
   if (attention && ui.screen != SCR_ATTENTION && !peeking) go(SCR_ATTENTION);
-  if (!attention && ui.screen == SCR_ATTENTION) go(SCR_HOME);
-  if (ui.screen == SCR_DONE && now > doneUntil) go(SCR_HOME);
-  if ((ui.screen == SCR_SESSIONS || ui.screen == SCR_DETAIL) && now - lastTouch > BACK_HOME_MS) go(SCR_HOME);
-  if (night && (rotIndex(ui.screen) >= 0)) go(SCR_NIGHT);
-  if (!night && ui.screen == SCR_NIGHT) go(SCR_HOME);
+  if (!attention && ui.screen == SCR_ATTENTION) goHome();
+  if (ui.screen == SCR_DONE && now > doneUntil) goHome();
+  if ((ui.screen == SCR_SESSIONS || ui.screen == SCR_DETAIL) && now - lastTouch > BACK_HOME_MS) goHome();
+  // face mode: a peek at the info screens ends after a while
+  if (displayMode == MODE_FACE && rotIndex(ui.screen) >= 0 && now - lastTouch > BACK_HOME_MS) go(SCR_FACE);
+  // at night the face sleeps on its own; the other modes show the night clock
+  if (night && rotIndex(ui.screen) >= 0 && displayMode != MODE_FACE) go(SCR_NIGHT);
+  if (!night && ui.screen == SCR_NIGHT) goHome();
 
   const int ri = rotIndex(ui.screen);
-  if (autoRotate && ri >= 0 && now - lastRotate > ROTATE_MS) go(rot[(ri + 1) % rotN]);
+  if (displayMode == MODE_AUTO && ri >= 0 && now - lastRotate > ROTATE_MS) go(rot[(ri + 1) % rotN]);
 
   // No Wi-Fi yet: keep the setup instructions on screen until it's done.
   static char setupBody[200];
@@ -298,14 +313,16 @@ void loop() {
     ui.msgTitle = L().wifiSetup;
     ui.msgBody = setupBody;
   } else if (ui.screen == SCR_MESSAGE) {
-    go(SCR_HOME);
+    goHome();
   }
 
   if (now - lastFrame >= ANIM_MS) {
     lastFrame = now;
     ui.frame++;
     fillCtx(now);
-    hwBacklight(ui.screen == SCR_NIGHT ? BL_NIGHT : BL_DAY);
+    if (ui.screen == SCR_FACE) faceUpdate(homeMood(), now < happyUntil, night, now);
+    const bool dim = ui.screen == SCR_NIGHT || (ui.screen == SCR_FACE && night);
+    hwBacklight(dim ? BL_NIGHT : BL_DAY);
     uiRender(ui);
     updateLed(now);
   }

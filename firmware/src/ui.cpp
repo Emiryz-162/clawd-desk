@@ -3,6 +3,7 @@
 #include "ui.h"
 #include "config.h"
 #include "data.h"
+#include "face.h"
 #include "gfx.h"
 #include "lang.h"
 
@@ -284,6 +285,7 @@ static void drawCurrent() {
     case SCR_DONE:      drawDone(); break;
     case SCR_NIGHT:     drawNight(); break;
     case SCR_MESSAGE:   drawMessage(); break;
+    case SCR_FACE:      faceDraw(); break;
   }
 }
 
@@ -307,5 +309,6 @@ void uiRender(const UiCtx& ctx) {
   uint16_t bg = C_BG;
   if (ctx.screen == SCR_ATTENTION) bg = C_CLAY;
   if (ctx.screen == SCR_NIGHT) bg = C_BLACK;
+  if (ctx.screen == SCR_FACE) bg = C_CLAY;
   gfx::frame(bg, drawAll);
 }

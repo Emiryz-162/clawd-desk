@@ -7,6 +7,7 @@ enum Screen : uint8_t {
   SCR_ATTENTION, SCR_DONE,              // events
   SCR_SESSIONS, SCR_DETAIL,             // opened by touch
   SCR_NIGHT,                            // light sensor
+  SCR_FACE,                             // face mode: Clawd's face only
   SCR_MESSAGE                           // boot / Wi-Fi setup messages
 };
 

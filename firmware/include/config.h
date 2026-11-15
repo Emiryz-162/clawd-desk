@@ -18,8 +18,10 @@
 
 // Timing (milliseconds)
 #define ROTATE_MS        10000   // auto-rotation between Home / Limits / Live
-#define AUTO_ROTATE_DEFAULT  0   // auto-rotation off until you hold the screen
-#define TOUCH_HOLD_MS     1500   // hold the screen this long to toggle auto-rotation
+// Display modes, switched by holding the screen: normal -> auto-rotate -> face
+#define DISPLAY_MODE_DEFAULT 0   // 0 normal, 1 auto-rotate, 2 face
+#define TOUCH_HOLD_MS     1500   // hold the screen this long to switch modes
+#define HAPPY_FACE_MS    10000   // face mode: smile this long after a job is done
 #define BACK_HOME_MS     15000   // list & detail fall back to Home after this
 #define DONE_SHOW_MS      6000   // "Bitti!" celebration length
 #define ANIM_MS            280   // Clawd animation frame time

@@ -32,8 +32,9 @@ struct Lang {
   const char* wifiSetupBody; // %s = hotspot name
   const char* wifiReset;
   const char* wifiResetBody;
-  const char* autoOn;
-  const char* autoOff;
+  const char* modeNormal;
+  const char* modeAuto;
+  const char* modeFace;
   bool percentFirst;         // "%62" (tr) or "62%" (en)
 };
 

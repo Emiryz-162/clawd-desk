@@ -12,7 +12,7 @@ static const Lang EN = {
   "Hello!", "Connecting to Wi-Fi...",
   "Wi-Fi setup", "On your phone, join the \"%s\" network and pick your home Wi-Fi on the page that opens.",
   "Resetting Wi-Fi", "The device restarts and opens the setup network.",
-  "Auto-rotate on", "Auto-rotate off",
+  "Normal mode", "Auto-rotate", "Face mode",
   false,
 };
 
@@ -25,7 +25,7 @@ static const Lang TR = {
   "Merhaba!", "Wi-Fi'ye bağlanıyorum...",
   "Wi-Fi kurulumu", "Telefonundan \"%s\" ağına bağlan ve açılan sayfadan evdeki Wi-Fi'yi seç.",
   "Wi-Fi sıfırlanıyor", "Cihaz yeniden başlayıp kurulum ağını açacak.",
-  "Otomatik geçiş açık", "Otomatik geçiş kapalı",
+  "Normal mod", "Otomatik geçiş", "Yüz modu",
   true,
 };
 

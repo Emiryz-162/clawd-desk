@@ -10,7 +10,9 @@ Masanda duran küçük bir Clawd. 10 dolarlık bir ESP32 dokunmatik ekranda **Cl
 
 ## Kısaca
 
-- **Sakin durur:** Ekran ana ekranda kalır. İstersen **ekrana 1,5 saniye basılı tutarak** otomatik geçişi açarsın: Ana ekran, Limitler ve Canlı oturum her 10 saniyede değişir. Tekrar basılı tutunca kapanır.
+- **Sakin durur:** Ekran ana ekranda kalır.
+- **Üç mod:** Ekrana **1,5 saniye basılı tutunca** mod değişir: **Normal → Otomatik geçiş → Yüz modu**.
+- **Yüz modu:** Ekran Clawd'ın yüzü olur, kılıfla birlikte cihazın tamamı tek bir Clawd gibi görünür. Göz kırpar, etrafa bakar, Claude çalışırken gözlerini kısar, iş bitince `^ ^` diye sevinir, bazen gözleri kalp olur, gece uyur. Bildirimler yine gelir. Dokununca bilgiler 15 saniye görünür.
 - **Olaylar öne çıkar:** Onay bekleyen bir komut varsa ekran o sayfada kalır ve LED sarı yanıp söner. İş bitince Clawd 6 saniye sevinir.
 - **Üç büyük dokunma bölgesi var:** sol, orta ve sağ.
 - **Gece modu:** Işık sensörü oda kararınca ekranı karartır.

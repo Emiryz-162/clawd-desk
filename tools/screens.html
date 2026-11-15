@@ -56,7 +56,16 @@ function clawd(x, y, size, mood, body = '#D97757', eye = '#141413') {
   return out.join('');
 }
 
-const header = (left, right = '14:32', color = 'var(--muted)') =>
+function faceView(look) {
+  S.style.background = 'var(--clay)';
+  const b = (x, y, w, h, c = '#141413') => `<i class="px" style="left:${x * 8}px;top:${y * 8}px;width:${w * 8}px;height:${h * 8}px;background:${c}"></i>`;
+  if (look === 'open') return b(11, 9, 4, 8) + b(25, 9, 4, 8);
+  if (look === 'happy') return [13, 27].map((cx) => b(cx - 3, 12, 2, 2) + b(cx - 1, 10, 2, 2) + b(cx + 1, 12, 2, 2)).join('');
+  const rows = ['.XX.XX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'];
+  return [13, 27].map((cx) => rows.map((r, y) => [...r].map((c, x) => (c === 'X' ? b(cx - 3.5 + x, 10 + y, 1, 1) : '')).join('')).join('')).join('');
+}
+
+const header =(left, right = '14:32', color = 'var(--muted)') =>
   `<div class="abs label" style="left:14px;top:13px;color:${color}">${left}</div><div class="abs label" style="right:14px;top:13px;color:${color}">${right}</div>`;
 const dots = (n, on) => `<div class="dots">${Array.from({ length: n }, (_, i) => `<i class="${i === on ? 'on' : ''}"></i>`).join('')}</div>`;
 const limitRow = (y, name, pct, color) => `
@@ -102,6 +111,11 @@ const views = {
         <div class="abs mono" style="right:14px;top:${114 + i * 15}px;color:var(--muted)">${a}</div>`).join('')
     + `<div class="abs" style="left:14px;top:205px;font-size:9.5px;color:var(--muted)">Tasks 3/5</div>
     <div class="abs bar" style="left:100px;top:208px;width:206px;height:6px"><i style="width:60%;background:var(--clay)"></i></div>` + dots(3, 2),
+
+  // face mode (firmware/src/face.cpp): 8 px blocks, eye centers at x 13 / 27, y 13
+  face: () => faceView('open'),
+  'face-happy': () => faceView('happy'),
+  'face-hearts': () => faceView('hearts'),
 
   attention: () => { S.style.background = 'var(--clay)'; return header('ATTENTION', '14:32', 'var(--bg)') + clawd(14, 66, 92, 'waiting', '#141413', '#D97757') + `
     <div class="abs" style="left:118px;top:54px;font:bold 8.5px Arial;color:var(--bg)">NEEDS APPROVAL</div>

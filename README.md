@@ -21,7 +21,9 @@ A tiny Clawd for your desk. It shows your **Claude Code** and **Codex** usage li
 
 **What makes it different:** it stays calm and you almost never have to touch it.
 
-- It **stays on Home**, which already shows Clawd's mood, the current job and both limits. If you like, **hold the screen for 1.5 seconds** to make it rotate through Home, Limits and the live session every 10 seconds. Hold again to stop.
+- It **stays on Home**, which already shows Clawd's mood, the current job and both limits.
+- **Hold the screen for 1.5 seconds** to switch modes: **Normal** → **Auto-rotate** (Home, Limits and the live session every 10 seconds) → **Face mode**.
+- In **face mode** the screen becomes Clawd's face, so the whole device is one big Clawd. It blinks, glances around, squints while Claude is working, smiles when a job is done, sometimes gets heart eyes, and falls asleep at night. Notifications still pop up, and a tap shows the info for 15 seconds.
 - When something needs you, it **jumps to the front**. If a command is waiting for approval, the screen stays there and the LED blinks yellow. When a job finishes, Clawd celebrates for 6 seconds.
 - When you do want to tap, there are just **three big touch zones** (left, middle, right), so the board's imprecise resistive touch never misses.
 - The **light sensor** dims it at night, and the **BOOT button** on the back works as a "next" button.
@@ -138,8 +140,11 @@ Releases: push a tag like `v0.2.0` and the [release workflow](.github/workflows/
 | 6 | **Session details** | Your request, time, steps, files, tokens and the last message |
 | 7 | **Done!** | For 6 seconds when a job finishes |
 | 8 | **Night** | When the room is dark: a big clock and a sleeping Clawd |
+| 9 | **Face mode** | Clawd's face only, with little poses. Hold the screen to switch to it |
 
-You move between 1–3 by tapping left or right, or let them rotate by themselves: **hold the screen for 1.5 seconds** to turn auto-rotate on or off. The active page dot is orange while it rotates. 4, 7 and 8 appear on their own when something happens. 5 and 6 open when you tap the middle.
+![Face mode: open eyes, happy eyes and heart eyes](docs/images/face-mode.png)
+
+You move between 1–3 by tapping left or right. **Hold the screen for 1.5 seconds** to switch between Normal, Auto-rotate and Face mode. The active page dot is orange while it auto-rotates. 4, 7 and 8 appear on their own when something happens. 5 and 6 open when you tap the middle.
 
 ### Touch zones
 
@@ -149,7 +154,7 @@ You move between 1–3 by tapping left or right, or let them rotate by themselve
 | Session list | up | open details | down |
 | Session details | back to list | home | next session |
 
-Hold anywhere for 1.5 seconds to turn auto-rotate on or off. If you don't touch anything for 15 seconds in the session list or details, it goes back to Home.
+Hold anywhere for 1.5 seconds to switch modes (Normal, Auto-rotate, Face). If you don't touch anything for 15 seconds in the session list or details, it goes back to Home.
 
 ### LED and buttons
 
