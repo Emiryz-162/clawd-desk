@@ -19,6 +19,8 @@ struct UiCtx {
   char status[40] = "CLAWD DESK";  // top-left label on the home screen
   int dotCount = 0;            // rotation page dots
   int dotActive = 0;
+  bool autoRotate = false;     // colors the active page dot
+  const char* toast = nullptr; // short message drawn over the screen
   const char* msgTitle = "";
   const char* msgBody = "";
 };

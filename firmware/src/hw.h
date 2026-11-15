@@ -6,8 +6,13 @@ enum Zone : int8_t { ZONE_NONE = -1, ZONE_LEFT = 0, ZONE_MID = 1, ZONE_RIGHT = 2
 // LONG: hold 5 s (forget Wi-Fi).
 enum BootPress : uint8_t { BOOT_NONE, BOOT_SHORT, BOOT_MEDIUM, BOOT_LONG };
 
+struct TouchEvent {
+  Zone zone = ZONE_NONE;     // ZONE_NONE: nothing happened
+  bool hold = false;         // true: held down instead of tapped
+};
+
 void hwBegin();
-Zone hwReadTouch();          // one event per tap (fires on press)
+TouchEvent hwReadTouch();
 BootPress hwReadBoot();
 int  hwReadLdr();            // smoothed light-sensor value
 void hwLed(uint8_t r, uint8_t g, uint8_t b);   // 0..255 each

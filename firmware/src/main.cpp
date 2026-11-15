@@ -21,6 +21,8 @@ static TFT_eSPI tft;
 static UiCtx ui;
 static Preferences prefs;
 static bool invertColors = false;
+static bool autoRotate = AUTO_ROTATE_DEFAULT;
+static uint32_t toastUntil = 0;
 
 static Screen rot[3];
 static int rotN = 0;
@@ -202,6 +204,8 @@ static void fillCtx(uint32_t now) {
   else strlcpy(ui.status, "CLAWD DESK", sizeof(ui.status));
 
   ui.mood = homeMood();
+  ui.autoRotate = autoRotate;
+  ui.toast = now < toastUntil ? (autoRotate ? L().autoOn : L().autoOff) : nullptr;
   const int ri = rotIndex(ui.screen);
   ui.dotCount = ri >= 0 ? rotN : 0;
   ui.dotActive = ri;
@@ -222,6 +226,7 @@ void setup() {
 #endif
   prefs.begin("clawd", false);
   invertColors = prefs.getBool("invert", defaultInvert);
+  autoRotate = prefs.getBool("autorotate", AUTO_ROTATE_DEFAULT);
   tft.invertDisplay(invertColors);
   tft.fillScreen(C_BG);
   hwBegin();  // after tft.init(), so the backlight pin stays on PWM
@@ -258,8 +263,17 @@ void loop() {
   } else if (b == BOOT_SHORT) {
     handleBoot();
   }
-  const Zone z = hwReadTouch();
-  if (z != ZONE_NONE) handleTap(z);
+  const TouchEvent te = hwReadTouch();
+  if (te.zone != ZONE_NONE && te.hold) {
+    // hold anywhere: switch auto-rotation on/off (saved on the board)
+    autoRotate = !autoRotate;
+    prefs.putBool("autorotate", autoRotate);
+    toastUntil = now + 1800;
+    lastTouch = now;
+    lastRotate = now;
+  } else if (te.zone != ZONE_NONE) {
+    handleTap(te.zone);
+  }
 
   updateNight(now);
 
@@ -274,7 +288,7 @@ void loop() {
   if (!night && ui.screen == SCR_NIGHT) go(SCR_HOME);
 
   const int ri = rotIndex(ui.screen);
-  if (ri >= 0 && now - lastRotate > ROTATE_MS) go(rot[(ri + 1) % rotN]);
+  if (autoRotate && ri >= 0 && now - lastRotate > ROTATE_MS) go(rot[(ri + 1) % rotN]);
 
   // No Wi-Fi yet: keep the setup instructions on screen until it's done.
   static char setupBody[200];

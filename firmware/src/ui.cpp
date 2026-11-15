@@ -42,7 +42,8 @@ static void dots() {
   int x = (W - total) / 2;
   for (int i = 0; i < C->dotCount; i++) {
     const int w = (i == C->dotActive) ? 14 : 5;
-    rrect(x, 229, w, 5, 2, i == C->dotActive ? C_TEXT : C_DOT_OFF);
+    const uint16_t on = C->autoRotate ? C_CLAY : C_TEXT;  // orange while auto-rotating
+    rrect(x, 229, w, 5, 2, i == C->dotActive ? on : C_DOT_OFF);
     x += w + 4;
   }
 }
@@ -286,6 +287,19 @@ static void drawCurrent() {
   }
 }
 
+static void drawToast() {
+  if (!C->toast) return;
+  const int w = textW(C->toast, F_BODY_B) + 28;
+  const int x = (W - w) / 2;
+  rrect(x, 186, w, 30, 15, C_TEXT);
+  textC(160, 206, C->toast, F_BODY_B, C_BG);
+}
+
+static void drawAll() {
+  drawCurrent();
+  drawToast();
+}
+
 void uiBegin(TFT_eSPI& tft) { gfx::begin(tft); }
 
 void uiRender(const UiCtx& ctx) {
@@ -293,5 +307,5 @@ void uiRender(const UiCtx& ctx) {
   uint16_t bg = C_BG;
   if (ctx.screen == SCR_ATTENTION) bg = C_CLAY;
   if (ctx.screen == SCR_NIGHT) bg = C_BLACK;
-  gfx::frame(bg, drawCurrent);
+  gfx::frame(bg, drawAll);
 }

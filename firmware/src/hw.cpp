@@ -6,7 +6,9 @@
 static SPIClass touchSpi(VSPI);
 static XPT2046_Touchscreen ts(PIN_TOUCH_CS, PIN_TOUCH_IRQ);
 static bool wasTouched = false;
-static uint32_t lastTouchMs = 0;
+static bool holdFired = false;
+static uint32_t lastTouchMs = 0, pressStart = 0, lastSeen = 0;
+static Zone pressZone = ZONE_NONE;
 
 static bool bootDown = false;
 static bool bootLongFired = false;
@@ -37,22 +39,47 @@ void hwBegin() {
   hwBacklight(BL_DAY);
 }
 
-Zone hwReadTouch() {
+static TouchEvent makeEvent(Zone z, bool hold) {
+  TouchEvent e;
+  e.zone = z;
+  e.hold = hold;
+  return e;
+}
+
+// A tap fires when the finger lifts; holding for TOUCH_HOLD_MS fires a hold
+// instead. Resistive touch flickers while pressed, so a press only ends
+// after the panel reads "not touched" for a short while.
+TouchEvent hwReadTouch() {
+  const uint32_t now = millis();
   const bool touched = ts.tirqTouched() && ts.touched();
-  Zone z = ZONE_NONE;
-  if (touched && !wasTouched && millis() - lastTouchMs > 200) {
-    TS_Point p = ts.getPoint();
-    int x = map(p.x, TOUCH_X_MIN, TOUCH_X_MAX, 0, 320);
-    if (TOUCH_FLIP_X) x = 320 - x;
-    x = constrain(x, 0, 319);
-    z = x < 107 ? ZONE_LEFT : (x < 213 ? ZONE_MID : ZONE_RIGHT);
-    lastTouchMs = millis();
+  if (touched) {
+    if (!wasTouched) {
+      if (now - lastTouchMs < 200) return {};
+      TS_Point p = ts.getPoint();
+      int x = map(p.x, TOUCH_X_MIN, TOUCH_X_MAX, 0, 320);
+      if (TOUCH_FLIP_X) x = 320 - x;
+      x = constrain(x, 0, 319);
+      pressZone = x < 107 ? ZONE_LEFT : (x < 213 ? ZONE_MID : ZONE_RIGHT);
+      pressStart = now;
+      holdFired = false;
+      wasTouched = true;
 #if TOUCH_DEBUG
-    Serial.printf("[touch] raw x=%d y=%d z=%d -> x=%d zone=%d\n", p.x, p.y, p.z, x, z);
+      Serial.printf("[touch] raw x=%d y=%d z=%d -> x=%d zone=%d\n", p.x, p.y, p.z, x, pressZone);
 #endif
+    }
+    lastSeen = now;
+    if (!holdFired && now - pressStart >= TOUCH_HOLD_MS) {
+      holdFired = true;
+      return makeEvent(pressZone, true);
+    }
+    return {};
   }
-  wasTouched = touched;
-  return z;
+  if (wasTouched && now - lastSeen > 120) {
+    wasTouched = false;
+    lastTouchMs = now;
+    if (!holdFired) return makeEvent(pressZone, false);
+  }
+  return {};
 }
 
 BootPress hwReadBoot() {

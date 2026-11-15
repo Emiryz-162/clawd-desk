@@ -19,9 +19,9 @@ A tiny Clawd for your desk. It shows your **Claude Code** and **Codex** usage li
 
 > An independent fan project. Not affiliated with, endorsed by or sponsored by Anthropic or OpenAI.
 
-**What makes it different:** you almost never have to touch it.
+**What makes it different:** it stays calm and you almost never have to touch it.
 
-- It **rotates by itself** between Home, Limits and the live session every 10 seconds.
+- It **stays on Home**, which already shows Clawd's mood, the current job and both limits. If you like, **hold the screen for 1.5 seconds** to make it rotate through Home, Limits and the live session every 10 seconds. Hold again to stop.
 - When something needs you, it **jumps to the front**. If a command is waiting for approval, the screen stays there and the LED blinks yellow. When a job finishes, Clawd celebrates for 6 seconds.
 - When you do want to tap, there are just **three big touch zones** (left, middle, right), so the board's imprecise resistive touch never misses.
 - The **light sensor** dims it at night, and the **BOOT button** on the back works as a "next" button.
@@ -139,17 +139,17 @@ Releases: push a tag like `v0.2.0` and the [release workflow](.github/workflows/
 | 7 | **Done!** | For 6 seconds when a job finishes |
 | 8 | **Night** | When the room is dark: a big clock and a sleeping Clawd |
 
-Screens 1–3 rotate on their own. 4, 7 and 8 appear when something happens. 5 and 6 only open when you tap.
+You move between 1–3 by tapping left or right, or let them rotate by themselves: **hold the screen for 1.5 seconds** to turn auto-rotate on or off. The active page dot is orange while it rotates. 4, 7 and 8 appear on their own when something happens. 5 and 6 open when you tap the middle.
 
 ### Touch zones
 
 | | Left third | Middle third | Right third |
 |---|---|---|---|
-| Rotating screens | previous | open sessions | next |
+| Home, Limits, Live | previous | open sessions | next |
 | Session list | up | open details | down |
 | Session details | back to list | home | next session |
 
-If you don't touch anything for 15 seconds, it goes back to Home.
+Hold anywhere for 1.5 seconds to turn auto-rotate on or off. If you don't touch anything for 15 seconds in the session list or details, it goes back to Home.
 
 ### LED and buttons
 
