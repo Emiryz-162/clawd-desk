@@ -57,10 +57,26 @@
   .note { font-size: 14px; color: var(--muted); }
   .warn { color: #f2c14e; }
   footer { margin-top: 40px; font-size: 14px; color: var(--muted); }
+  main { position: relative; }
+  .lang {
+    position: absolute; top: 14px; right: 20px; display: flex;
+    border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
+  }
+  .lang button {
+    background: var(--panel); color: var(--muted); border: 0; padding: 5px 11px;
+    font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+  .lang button + button { border-left: 1px solid var(--line); }
+  .lang button:hover { color: var(--text); }
+  .lang button[aria-pressed="true"] { background: var(--clay); color: var(--bg); }
 </style>
 </head>
 <body>
 <main>
+  <div class="lang" role="group" aria-label="Language / Dil">
+    <button type="button" data-lang="en" aria-pressed="true">EN</button>
+    <button type="button" data-lang="tr" aria-pressed="false">TR</button>
+  </div>
   <header>
     <div class="clawd" aria-hidden="true">
       <i style="left:12px;top:18px;width:72px;height:42px"></i>
@@ -74,54 +90,54 @@
       <i class="eye" style="left:66px;top:30px;width:6px;height:12px"></i>
     </div>
     <div>
-      <h1>Clawd Desk installer</h1>
-      <p>Put Clawd Desk on your ESP32-2432S028R from the browser. No tools to install.</p>
+      <h1 data-i18n="title">Clawd Desk installer</h1>
+      <p data-i18n="lead">Put Clawd Desk on your ESP32-2432S028R from the browser. No tools to install.</p>
     </div>
   </header>
 
   <ol>
     <li>
-      <h2>Plug in the board</h2>
-      <p>Connect it to this computer with a USB <em>data</em> cable. Some cables only charge.</p>
-      <p class="note">Use Chrome or Edge on a computer. Other browsers can't talk to USB devices.</p>
+      <h2 data-i18n="s1h">Plug in the board</h2>
+      <p data-i18n="s1p">Connect it to this computer with a USB <em>data</em> cable. Some cables only charge.</p>
+      <p class="note" data-i18n="s1n">Use Chrome or Edge on a computer. Other browsers can't talk to USB devices.</p>
     </li>
 
     <li>
-      <h2>Pick your board and install</h2>
-      <p>Not sure? Pick the first one.</p>
+      <h2 data-i18n="s2h">Pick your board and install</h2>
+      <p data-i18n="s2p">Not sure? Pick the first one.</p>
       <fieldset>
-        <legend class="note">Board type</legend>
+        <legend class="note" data-i18n="board">Board type</legend>
         <label><input type="radio" name="board" value="cyd" checked>
-          <div><b>Most boards</b><span>One micro USB port</span></div></label>
+          <div data-i18n="b1"><b>Most boards</b><span>One micro USB port</span></div></label>
         <label><input type="radio" name="board" value="cyd2usb">
-          <div><b>Two USB ports</b><span>Both micro USB and USB-C</span></div></label>
+          <div data-i18n="b2"><b>Two USB ports</b><span>Both micro USB and USB-C</span></div></label>
       </fieldset>
       <esp-web-install-button id="install" manifest="firmware/cyd/manifest.json">
-        <button slot="activate">Install Clawd Desk</button>
-        <span slot="unsupported" class="warn">This browser can't flash boards. Please open this page in Chrome or Edge on a computer.</span>
-        <span slot="not-allowed" class="warn">This page must be opened over https.</span>
+        <button slot="activate" data-i18n="install">Install Clawd Desk</button>
+        <span slot="unsupported" class="warn" data-i18n="unsupported">This browser can't flash boards. Please open this page in Chrome or Edge on a computer.</span>
+        <span slot="not-allowed" class="warn" data-i18n="https">This page must be opened over https.</span>
       </esp-web-install-button>
-      <p class="note" style="margin-top:12px">Pick the port that says <code>USB-SERIAL CH340</code> or <code>CP210x</code>. If it doesn't connect, hold the <b>BOOT</b> button on the back of the board and try again.</p>
-      <p class="note">Colors look like a photo negative afterwards? Hold <b>BOOT</b> for 2 seconds and let go. The board remembers it.</p>
+      <p class="note" style="margin-top:12px" data-i18n="port">Pick the port that says <code>USB-SERIAL CH340</code> or <code>CP210x</code>. If it doesn't connect, hold the <b>BOOT</b> button on the back of the board and try again.</p>
+      <p class="note" data-i18n="invert">Colors look like a photo negative afterwards? Hold <b>BOOT</b> for 2 seconds and let go. The board remembers it.</p>
     </li>
 
     <li>
-      <h2>Connect it to Wi-Fi</h2>
-      <p>When the screen says <b>Wi-Fi setup</b>, join the <code>ClawdDesk-Setup</code> network on your phone and pick your home Wi-Fi on the page that opens. If no page opens, go to <code>192.168.4.1</code>.</p>
+      <h2 data-i18n="s3h">Connect it to Wi-Fi</h2>
+      <p data-i18n="s3p">When the screen says <b>Wi-Fi setup</b>, join the <code>ClawdDesk-Setup</code> network on your phone and pick your home Wi-Fi on the page that opens. If no page opens, go to <code>192.168.4.1</code>.</p>
     </li>
 
     <li>
-      <h2>Set up your computer</h2>
-      <p><b>Windows:</b> download and run the setup. It finds your screen, connects Claude Code and starts with Windows.</p>
-      <p><a class="btn" href="https://github.com/Emiryz-162/clawd-desk/releases/latest/download/ClawdDesk-Setup.exe">Download ClawdDesk-Setup.exe</a></p>
-      <p class="note">Windows may warn that the app is from an unknown publisher. Click <b>More info → Run anyway</b>.</p>
-      <p><b>macOS / Linux:</b> see the <a href="https://github.com/Emiryz-162/clawd-desk#step-4-start-the-companion-on-your-computer">guide on GitHub</a>.</p>
+      <h2 data-i18n="s4h">Set up your computer</h2>
+      <p data-i18n="s4p"><b>Windows:</b> download and run the setup. It finds your screen, connects Claude Code and starts with Windows.</p>
+      <p><a class="btn" href="https://github.com/Emiryz-162/clawd-desk/releases/latest/download/ClawdDesk-Setup.exe" data-i18n="download">Download ClawdDesk-Setup.exe</a></p>
+      <p class="note" data-i18n="unsigned">Windows may warn that the app is from an unknown publisher. Click <b>More info → Run anyway</b>.</p>
+      <p data-i18n="mac"><b>macOS / Linux:</b> see the <a href="https://github.com/Emiryz-162/clawd-desk#step-3-set-up-your-computer">guide on GitHub</a>.</p>
     </li>
   </ol>
 
   <footer>
-    <p><a href="https://github.com/Emiryz-162/clawd-desk">Source code and full guide on GitHub</a> · MIT license</p>
-    <p>An independent fan project. Not affiliated with Anthropic or OpenAI.</p>
+    <p data-i18n="source"><a href="https://github.com/Emiryz-162/clawd-desk">Source code and full guide on GitHub</a> · MIT license</p>
+    <p data-i18n="fan">An independent fan project. Not affiliated with Anthropic or OpenAI.</p>
   </footer>
 </main>
 <script>
@@ -129,6 +145,64 @@
   for (const radio of document.querySelectorAll('input[name="board"]')) {
     radio.addEventListener('change', () => {
       button.setAttribute('manifest', `firmware/${radio.value}/manifest.json`);
+    });
+  }
+
+  // ---- language: English is written in the page, Turkish lives here
+  const TR = {
+    doc: 'Clawd Desk yükleyicisi',
+    desc: "Clawd Desk'i ESP32-2432S028R (Cheap Yellow Display) kartına tarayıcıdan yükle.",
+    title: 'Clawd Desk yükleyicisi',
+    lead: "Clawd Desk'i ESP32-2432S028R kartına tarayıcıdan yükle. Hiçbir program kurman gerekmez.",
+    s1h: 'Kartı bağla',
+    s1p: 'Kartı bu bilgisayara USB <em>veri</em> kablosuyla bağla. Bazı kablolar sadece şarj eder.',
+    s1n: 'Bilgisayarda Chrome ya da Edge kullan. Diğer tarayıcılar USB cihazlarla konuşamaz.',
+    s2h: 'Kartını seç ve yükle',
+    s2p: 'Emin değil misin? İlkini seç.',
+    board: 'Kart tipi',
+    b1: '<b>Çoğu kart</b><span>Tek micro USB girişi</span>',
+    b2: '<b>İki USB girişi</b><span>Hem micro USB hem USB-C</span>',
+    install: "Clawd Desk'i yükle",
+    unsupported: 'Bu tarayıcı kartlara yükleme yapamaz. Bu sayfayı bilgisayarda Chrome ya da Edge ile aç.',
+    https: 'Bu sayfa https üzerinden açılmalı.',
+    port: '<code>USB-SERIAL CH340</code> ya da <code>CP210x</code> yazan portu seç. Bağlanmazsa kartın arkasındaki <b>BOOT</b> düğmesini basılı tutup tekrar dene.',
+    invert: 'Yüklemeden sonra renkler fotoğraf negatifi gibi mi görünüyor? <b>BOOT</b> düğmesini 2 saniye basılı tutup bırak. Kart bunu hatırlar.',
+    s3h: "Wi-Fi'ye bağla",
+    s3p: 'Ekranda <b>Wi-Fi setup</b> yazınca telefonundan <code>ClawdDesk-Setup</code> ağına bağlan ve açılan sayfadan evdeki Wi-Fi\'yi seç. Sayfa açılmazsa <code>192.168.4.1</code> adresine git.',
+    s4h: 'Bilgisayarını hazırla',
+    s4p: '<b>Windows:</b> kurulum dosyasını indirip çalıştır. Ekranı bulur, Claude Code\'u bağlar ve Windows açılışında kendiliğinden başlar.',
+    download: 'ClawdDesk-Setup.exe dosyasını indir',
+    unsigned: 'Windows uygulamanın bilinmeyen bir yayıncıdan geldiği uyarısını verebilir. <b>Ek bilgi → Yine de çalıştır</b>\'a bas.',
+    mac: '<b>macOS / Linux:</b> <a href="https://github.com/Emiryz-162/clawd-desk#step-3-set-up-your-computer">GitHub\'daki rehbere</a> bak (İngilizce).',
+    source: '<a href="https://github.com/Emiryz-162/clawd-desk">Kaynak kod ve tam rehber GitHub\'da</a> · MIT lisansı',
+    fan: 'Bağımsız bir hayran projesi. Anthropic ya da OpenAI ile bir bağlantısı yoktur.',
+  };
+  const nodes = [...document.querySelectorAll('[data-i18n]')];
+  const descMeta = document.querySelector('meta[name="description"]');
+  const EN = { doc: document.title, desc: descMeta.content };
+  for (const el of nodes) EN[el.dataset.i18n] = el.innerHTML;
+
+  function setLang(lang) {
+    const t = lang === 'tr' ? TR : EN;
+    document.documentElement.lang = lang;
+    document.title = t.doc;
+    descMeta.content = t.desc;
+    for (const el of nodes) el.innerHTML = t[el.dataset.i18n];
+    for (const b of document.querySelectorAll('.lang button')) {
+      b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
+    }
+  }
+
+  let saved = null;
+  try { saved = localStorage.getItem('clawd-lang'); } catch {}
+  const asked = new URLSearchParams(location.search).get('lang');
+  const start = asked || saved || ((navigator.language || '').toLowerCase().startsWith('tr') ? 'tr' : 'en');
+  if (start === 'tr') setLang('tr');
+
+  for (const b of document.querySelectorAll('.lang button')) {
+    b.addEventListener('click', () => {
+      setLang(b.dataset.lang);
+      try { localStorage.setItem('clawd-lang', b.dataset.lang); } catch {}
     });
   }
 </script>
